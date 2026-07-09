@@ -1,833 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Speaker Bench — DIY Design Toolkit</title>
-<meta name="description" content="Free DIY loudspeaker toolkit: sealed & ported enclosure calculator, 2-way crossover designer, Zobel & L-pad, and system setup notes. Runs entirely in your browser.">
-<meta name="theme-color" content="#0e1418">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔊</text></svg>">
-<style>
-  :root{
-    --bg:#0e1418; --panel:#161e26; --panel2:#1c262f; --line:#2a3540;
-    --ink:#e6edf3; --dim:#93a1ac; --faint:#5f6f7b;
-    --cyan:#35d0c8;   /* signal / data trace */
-    --copper:#d98c4a; /* inductor / copper */
-    --amber:#e6b450;  /* caution */
-    --red:#e5645a;    /* danger */
-    --green:#7bc47f;  /* ok */
-    --mono:ui-monospace,"SF Mono","Cascadia Code","JetBrains Mono",Consolas,monospace;
-    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0}
-  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;
-    background-image:radial-gradient(circle at 20% -10%, #17222b 0%, transparent 55%);}
-  a{color:var(--cyan)}
-  .wrap{max-width:1180px;margin:0 auto;padding:22px 18px 80px}
+  <meta charset="UTF-8">
+  <title>CMazzetti Project Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  /* header */
-  header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);
-    padding-bottom:16px;margin-bottom:8px}
-  .logo{font-family:var(--mono);font-weight:700;font-size:22px;letter-spacing:-.5px}
-  .logo b{color:var(--cyan)}
-  .tag{color:var(--dim);font-size:13px;font-family:var(--mono)}
-  .tag .sep{color:var(--faint);margin:0 6px}
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f4f4f4;
+      color: #222;
+    }
 
-  /* tabs */
-  nav{display:flex;gap:2px;flex-wrap:wrap;margin:18px 0 22px;border-bottom:1px solid var(--line)}
-  nav button{background:none;border:none;color:var(--dim);font-family:var(--mono);font-size:12.5px;
-    letter-spacing:.06em;text-transform:uppercase;padding:11px 15px;cursor:pointer;border-bottom:2px solid transparent;
-    transition:color .15s}
-  nav button:hover{color:var(--ink)}
-  nav button.active{color:var(--cyan);border-bottom-color:var(--cyan)}
-  nav button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+    header {
+      background: #222;
+      color: white;
+      padding: 35px 20px;
+      text-align: center;
+    }
 
-  .view{display:none;animation:fade .2s ease}
-  .view.active{display:block}
-  @keyframes fade{from{opacity:0}to{opacity:1}}
-  @media(prefers-reduced-motion:reduce){.view{animation:none}}
+    header h1 {
+      margin: 0 0 10px;
+      font-size: 2.2rem;
+    }
 
-  /* layout */
-  .grid{display:grid;gap:16px}
-  .cols{grid-template-columns:minmax(280px,1fr) minmax(300px,1.15fr)}
-  @media(max-width:820px){.cols{grid-template-columns:1fr}}
+    header p {
+      margin: 0;
+      color: #ddd;
+      font-size: 1rem;
+    }
 
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px}
-  .card + .card{margin-top:16px}
-  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--copper);margin:0 0 12px;display:flex;align-items:center;gap:8px}
-  .eyebrow::after{content:"";flex:1;height:1px;background:var(--line)}
-  h2{margin:0 0 4px;font-size:17px}
-  .hint{color:var(--dim);font-size:13px;margin:0 0 14px}
+    main {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 20px;
+    }
 
-  /* inputs */
-  .field{margin-bottom:12px}
-  .field label{display:block;font-size:12px;color:var(--dim);margin-bottom:4px;font-family:var(--mono);letter-spacing:.02em}
-  .field label .u{color:var(--faint)}
-  input,select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);
-    font-family:var(--mono);font-size:14px;padding:8px 10px;border-radius:5px}
-  input:focus,select:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 2px rgba(53,208,200,.18)}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-  @media(max-width:520px){.row3{grid-template-columns:1fr 1fr}}
+    .intro {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+      margin-bottom: 25px;
+    }
 
-  button.btn{background:var(--cyan);color:#062024;border:none;font-family:var(--mono);font-weight:600;
-    font-size:13px;padding:9px 16px;border-radius:5px;cursor:pointer;letter-spacing:.03em}
-  button.btn:hover{filter:brightness(1.08)}
-  button.btn.ghost{background:none;color:var(--cyan);border:1px solid var(--line)}
-  button.btn.ghost:hover{border-color:var(--cyan)}
-  button.btn.mini{padding:5px 10px;font-size:11.5px}
-  button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+    .intro h2 {
+      margin-top: 0;
+    }
 
-  /* readouts */
-  .readout{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:baseline;
-    font-family:var(--mono);margin:2px 0}
-  .readout .k{color:var(--dim);font-size:12.5px}
-  .readout .v{font-size:18px;text-align:right;font-variant-numeric:tabular-nums}
-  .readout .v small{color:var(--faint);font-size:12px;margin-left:3px}
-  .big{color:var(--cyan)}
-  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-bottom:10px}
-  .stat .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
-  .stat .num{font-family:var(--mono);font-size:26px;font-variant-numeric:tabular-nums;margin-top:2px}
-  .stat .num small{font-size:14px;color:var(--faint)}
+    .project-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
 
-  .pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:20px;
-    border:1px solid var(--line);letter-spacing:.04em}
-  .pill.sealed{color:var(--copper);border-color:var(--copper)}
-  .pill.ported{color:var(--cyan);border-color:var(--cyan)}
-  .pill.either{color:var(--amber);border-color:var(--amber)}
+    .project-card {
+      background: white;
+      padding: 22px;
+      border-radius: 12px;
+      text-decoration: none;
+      color: #222;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: block;
+    }
 
-  .note{border-left:3px solid var(--line);padding:8px 12px;margin:12px 0;font-size:13px;color:var(--dim);
-    background:var(--panel2);border-radius:0 6px 6px 0}
-  .note.warn{border-left-color:var(--amber);color:#e9d8ab}
-  .note.bad{border-left-color:var(--red);color:#f0c2bd}
-  .note.ok{border-left-color:var(--green);color:#c6e6c8}
+    .project-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    }
 
-  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px}
-  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}
-  th{color:var(--dim);font-weight:500;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
-  td.val{color:var(--cyan);font-variant-numeric:tabular-nums;text-align:right}
-  td.near{color:var(--copper);text-align:right}
+    .project-card h2 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 1.3rem;
+    }
 
-  canvas{width:100%;height:auto;display:block;background:var(--bg);border:1px solid var(--line);border-radius:6px}
-  .legend{display:flex;gap:16px;font-family:var(--mono);font-size:12px;color:var(--dim);margin-top:8px;flex-wrap:wrap}
-  .legend span{display:flex;align-items:center;gap:6px}
-  .legend i{width:16px;height:3px;border-radius:2px;display:inline-block}
+    .project-card p {
+      margin-bottom: 0;
+      color: #555;
+      line-height: 1.5;
+    }
 
-  /* driver library */
-  .drvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
-  .drv{background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:12px;position:relative}
-  .drv .name{font-weight:600;font-size:14px;margin-bottom:2px}
-  .drv .type{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--copper)}
-  .drv .params{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-top:8px;line-height:1.7}
-  .drv .x{position:absolute;top:8px;right:10px;color:var(--faint);cursor:pointer;font-size:16px;background:none;border:none}
-  .drv .x:hover{color:var(--red)}
-  .empty{color:var(--faint);font-family:var(--mono);font-size:13px;padding:20px;text-align:center;
-    border:1px dashed var(--line);border-radius:7px}
+    .tag {
+      display: inline-block;
+      background: #e8e8e8;
+      color: #333;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-bottom: 12px;
+    }
 
-  .ref h3{color:var(--cyan);font-size:14px;font-family:var(--mono);margin:20px 0 6px}
-  .ref p,.ref li{color:var(--dim);font-size:13.5px}
-  .ref code{background:var(--panel2);padding:1px 6px;border-radius:4px;font-family:var(--mono);color:var(--ink)}
-
-  /* schematic */
-  svg.sch{width:100%;height:auto;background:var(--bg);border:1px solid var(--line);border-radius:6px}
-  svg.sch text{font-family:var(--mono);fill:var(--dim)}
-  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);color:var(--faint);
-    font-family:var(--mono);font-size:11.5px;line-height:1.8}
-</style>
+    footer {
+      text-align: center;
+      padding: 25px;
+      color: #666;
+      font-size: 0.9rem;
+    }
+  </style>
 </head>
+
 <body>
-<div class="wrap">
   <header>
-    <div class="logo">Speaker<b>Bench</b></div>
-    <div class="tag">Cabinet &amp; crossover calculator<span class="sep">·</span>enter your driver, get numbers, not vibes</div>
+    <h1>CMazzetti Project Hub</h1>
+    <p>Quick access to my HTML projects, tools and experiments</p>
   </header>
 
-  <nav id="tabs" aria-label="Tool sections">
-    <button data-v="drivers" class="active">Drivers</button>
-    <button data-v="enclosure">Enclosure</button>
-    <button data-v="crossover">Crossover</button>
-    <button data-v="system">2.0 / 2.1</button>
-    <button data-v="reference">Reference</button>
-  </nav>
+  <main>
+    <section class="intro">
+      <h2>My Projects</h2>
+      <p>This page is a central hub for my web-based tools and projects. Each card opens a separate HTML project.</p>
+    </section>
 
-  <!-- ================= DRIVERS ================= -->
-  <section class="view active" id="v-drivers">
-    <div class="grid cols">
-      <div class="card">
-        <p class="eyebrow">Add a driver</p>
-        <h2>Driver library</h2>
-        <p class="hint">Enter Thiele/Small parameters from the datasheet or your DATS measurement. Saved in this browser so the Enclosure and Crossover tabs can pull them in.</p>
-        <div class="field">
-          <label>Name</label>
-          <input id="d-name" placeholder="e.g. Satori MW19P-8">
-        </div>
-        <div class="field">
-          <label>Role</label>
-          <select id="d-type">
-            <option>Woofer</option><option>Midrange</option><option>Tweeter</option>
-            <option>Subwoofer</option><option>Full-range</option>
-          </select>
-        </div>
-        <div class="row3">
-          <div class="field"><label>Fs <span class="u">Hz</span></label><input id="d-fs" type="number" step="any"></div>
-          <div class="field"><label>Qts</label><input id="d-qts" type="number" step="any"></div>
-          <div class="field"><label>Vas <span class="u">L</span></label><input id="d-vas" type="number" step="any"></div>
-        </div>
-        <div class="row3">
-          <div class="field"><label>Qes</label><input id="d-qes" type="number" step="any"></div>
-          <div class="field"><label>Qms</label><input id="d-qms" type="number" step="any"></div>
-          <div class="field"><label>Re <span class="u">Ω</span></label><input id="d-re" type="number" step="any"></div>
-        </div>
-        <div class="row3">
-          <div class="field"><label>Le <span class="u">mH</span></label><input id="d-le" type="number" step="any"></div>
-          <div class="field"><label>Sd <span class="u">cm²</span></label><input id="d-sd" type="number" step="any"></div>
-          <div class="field"><label>Sens <span class="u">dB</span></label><input id="d-sens" type="number" step="any"></div>
-        </div>
-        <button class="btn" onclick="addDriver()">Save driver</button>
-        <button class="btn ghost" onclick="loadDemo()">Load example set</button>
-      </div>
+    <section class="project-grid">
 
-      <div class="card">
-        <p class="eyebrow">Saved</p>
-        <div id="drv-list"></div>
-        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-          <button class="btn ghost mini" onclick="exportDrivers()">Export library</button>
-          <button class="btn ghost mini" onclick="document.getElementById('imp-file').click()">Import library</button>
-          <input id="imp-file" type="file" accept="application/json,.json" style="display:none" onchange="importDrivers(this)">
-        </div>
-      </div>
-    </div>
-  </section>
+      <a class="project-card" href="speaker-bench/">
+        <span class="tag">Audio / DIY</span>
+        <h2>Speaker Bench</h2>
+        <p>DIY speaker enclosure, crossover and system design toolkit.</p>
+      </a>
 
-  <!-- ================= ENCLOSURE ================= -->
-  <section class="view" id="v-enclosure">
-    <div class="grid cols">
-      <div class="card">
-        <p class="eyebrow">Driver</p>
-        <div class="field">
-          <label>Use a saved driver</label>
-          <select id="enc-driver" onchange="pullDriver('enc')"><option value="">— manual entry —</option></select>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Fs <span class="u">Hz</span></label><input id="enc-fs" type="number" step="any" oninput="calcEnc()"></div>
-          <div class="field"><label>Qts</label><input id="enc-qts" type="number" step="any" oninput="calcEnc()"></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Qes</label><input id="enc-qes" type="number" step="any" oninput="calcEnc()"></div>
-          <div class="field"><label>Vas <span class="u">L</span></label><input id="enc-vas" type="number" step="any" oninput="calcEnc()"></div>
-        </div>
+      <a class="project-card" href="#">
+        <span class="tag">Coming soon</span>
+        <h2>Project 2</h2>
+        <p>Add your next HTML project here.</p>
+      </a>
 
-        <p class="eyebrow" style="margin-top:18px">Sealed target</p>
-        <div class="field">
-          <label>Target Qtc <span class="u">(0.5 tight · 0.707 flat · 1.0 punchy)</span></label>
-          <input id="enc-qtc" type="number" step="0.01" value="0.707" oninput="calcEnc()">
-        </div>
+      <a class="project-card" href="#">
+        <span class="tag">Coming soon</span>
+        <h2>Project 3</h2>
+        <p>Add another project or classroom tool here.</p>
+      </a>
 
-        <p class="eyebrow" style="margin-top:18px">Port (for the vented option)</p>
-        <div class="row3">
-          <div class="field"><label>Dia <span class="u">cm</span></label><input id="enc-pd" type="number" step="any" value="5" oninput="calcEnc()"></div>
-          <div class="field"><label>Ports</label><input id="enc-pn" type="number" step="1" value="1" oninput="calcEnc()"></div>
-          <div class="field"><label>Box ratio</label>
-            <select id="enc-ratio" onchange="calcEnc()">
-              <option value="golden">Golden 1:1.6:2.6</option>
-              <option value="compact">Compact 1:1.26:1.59</option>
-              <option value="tall">Tall 1:1.4:3.0</option>
-            </select>
-          </div>
-        </div>
-        <button class="btn ghost mini" id="share-btn" style="margin-top:14px" onclick="shareLink()">Copy shareable link</button>
-      </div>
-
-      <div class="card">
-        <p class="eyebrow">Verdict</p>
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-          <div class="stat" style="flex:1;margin:0">
-            <div class="lbl">EBP · Fs/Qes</div>
-            <div class="num" id="enc-ebp">—</div>
-          </div>
-          <div id="enc-rec" style="flex:1"></div>
-        </div>
-        <div id="enc-out"></div>
-        <canvas id="enc-plot" width="560" height="300"></canvas>
-        <div class="legend">
-          <span><i style="background:var(--copper)"></i>Sealed 2nd-order</span>
-          <span><i style="background:var(--cyan)"></i>Ported 4th-order (idealised)</span>
-        </div>
-        <p class="hint" style="margin-top:10px">Ported curve is an idealised maximally-flat 4th-order shape at the computed F3 — real tuning &amp; box losses shift it. Confirm the final box in VituixCAD.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= CROSSOVER ================= -->
-  <section class="view" id="v-crossover">
-    <div class="grid cols">
-      <div class="card">
-        <p class="eyebrow">2-way passive crossover</p>
-        <div class="row2">
-          <div class="field"><label>Woofer (saved)</label><select class="xo-drv" id="xo-dw" onchange="pullXO()"><option value="">— manual —</option></select></div>
-          <div class="field"><label>Tweeter (saved)</label><select class="xo-drv" id="xo-dt" onchange="pullXO()"><option value="">— manual —</option></select></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Crossover freq <span class="u">Hz</span></label><input id="xo-fc" type="number" step="any" value="2500" oninput="calcXO()"></div>
-          <div class="field"><label>Order / slope</label>
-            <select id="xo-order" onchange="calcXO()">
-              <option value="1">1st · 6 dB/oct</option>
-              <option value="2" selected>2nd · 12 dB/oct</option>
-              <option value="3">3rd · 18 dB/oct</option>
-            </select>
-          </div>
-        </div>
-        <div class="row2" id="xo-align-wrap">
-          <div class="field"><label>Alignment (2nd order)</label>
-            <select id="xo-align" onchange="calcXO()">
-              <option value="0.7071">Butterworth · Q 0.71</option>
-              <option value="0.5">Linkwitz-Riley · Q 0.5</option>
-              <option value="0.5774">Bessel · Q 0.58</option>
-            </select>
-          </div>
-          <div class="field"><label></label><span class="pill" style="margin-top:6px" id="xo-sumnote">—</span></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Woofer Z <span class="u">Ω</span></label><input id="xo-zw" type="number" step="any" value="8" oninput="calcXO()"></div>
-          <div class="field"><label>Tweeter Z <span class="u">Ω</span></label><input id="xo-zt" type="number" step="any" value="8" oninput="calcXO()"></div>
-        </div>
-        <p class="hint" style="margin-top:2px">Picking a saved driver drops its Re in as the load and pre-fills the Zobel / L-pad — a sane starting approximation.</p>
-
-        <p class="eyebrow" style="margin-top:20px">Zobel (flatten rising Le)</p>
-        <div class="row2">
-          <div class="field"><label>Re <span class="u">Ω</span></label><input id="z-re" type="number" step="any" value="6.2" oninput="calcZobel()"></div>
-          <div class="field"><label>Le <span class="u">mH</span></label><input id="z-le" type="number" step="any" value="0.5" oninput="calcZobel()"></div>
-        </div>
-        <div id="z-out"></div>
-
-        <p class="eyebrow" style="margin-top:20px">L-pad (pad down a hot tweeter)</p>
-        <div class="row2">
-          <div class="field"><label>Attenuation <span class="u">dB</span></label><input id="lp-db" type="number" step="0.5" value="3" oninput="calcLpad()"></div>
-          <div class="field"><label>Tweeter Z <span class="u">Ω</span></label><input id="lp-z" type="number" step="any" value="8" oninput="calcLpad()"></div>
-        </div>
-        <div id="lp-out"></div>
-      </div>
-
-      <div class="card">
-        <p class="eyebrow">Components</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-          <div>
-            <div style="font-family:var(--mono);font-size:12px;color:var(--copper);margin-bottom:4px">LOW-PASS · woofer</div>
-            <table id="xo-lp"></table>
-          </div>
-          <div>
-            <div style="font-family:var(--mono);font-size:12px;color:var(--cyan);margin-bottom:4px">HIGH-PASS · tweeter</div>
-            <table id="xo-hp"></table>
-          </div>
-        </div>
-        <p class="hint" style="margin-top:6px"><span style="color:var(--copper)">Copper</span> = nearest standard value you can actually buy.</p>
-
-        <p class="eyebrow" style="margin-top:16px">Idealised response</p>
-        <canvas id="xo-plot" width="560" height="260"></canvas>
-        <div class="legend">
-          <span><i style="background:var(--copper)"></i>Woofer LP</span>
-          <span><i style="background:var(--cyan)"></i>Tweeter HP</span>
-        </div>
-
-        <p class="eyebrow" style="margin-top:16px">Network diagram</p>
-        <svg class="sch" viewBox="0 0 560 190" id="xo-sch"></svg>
-        <p class="hint">Textbook values into a flat resistive load. Real drivers aren't flat — baffle step, Le rise and the driver's own rolloff shift everything. Treat these as a starting point, then dial it in with measurements in VituixCAD.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= SYSTEM ================= -->
-  <section class="view" id="v-system">
-    <div class="grid cols">
-      <div class="card">
-        <p class="eyebrow">Pick a topology</p>
-        <div class="field">
-          <label>System</label>
-          <select id="sys-type" onchange="calcSys()">
-            <option value="20">2.0 — two full-range/bookshelf, no sub</option>
-            <option value="21" selected>2.1 — two satellites + one sub</option>
-            <option value="52">5.2 — surround + two subs</option>
-          </select>
-        </div>
-        <p class="eyebrow" style="margin-top:16px">Satellite limit</p>
-        <div class="field">
-          <label>Satellite low-end −3 dB point <span class="u">Hz</span></label>
-          <input id="sys-f3" type="number" step="any" value="90" oninput="calcSys()">
-          <p class="hint" style="margin-top:6px">Roughly: 3&Prime; driver ≈ 120 Hz · 4&Prime; ≈ 90 Hz · 5&Prime; ≈ 70 Hz. Or read it off the sealed F3 from the Enclosure tab.</p>
-        </div>
-        <div class="field">
-          <label>Room / use</label>
-          <select id="sys-room" onchange="calcSys()">
-            <option value="ht">Home theatre (bass management)</option>
-            <option value="music">Music / stereo</option>
-            <option value="desk">Nearfield / desktop</option>
-          </select>
-        </div>
-      </div>
-      <div class="card">
-        <p class="eyebrow">Setup notes</p>
-        <div id="sys-out"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= REFERENCE ================= -->
-  <section class="view ref" id="v-reference">
-    <div class="card">
-      <p class="eyebrow">Cheat sheet</p>
-      <h3>Sealed or ported? — EBP = Fs / Qes</h3>
-      <ul>
-        <li><b>EBP &lt; 50</b> — driver wants a <b>sealed</b> box. Tighter bass, gentler 12 dB/oct rolloff, more forgiving of box size, better transient/group-delay behaviour.</li>
-        <li><b>EBP 50–100</b> — <b>either</b> works. Choose by goal: sealed for punch &amp; simplicity, ported for extension &amp; efficiency.</li>
-        <li><b>EBP &gt; 100</b> — driver wants a <b>ported</b> box. More low-end output for the size, steeper 24 dB/oct rolloff, but rings more and unloads below tuning.</li>
-      </ul>
-      <h3>Sealed box Qtc — the "sound" knob</h3>
-      <ul>
-        <li><b>0.5</b> — critically damped. Tightest transients, no overshoot, but needs the biggest box and rolls off earliest.</li>
-        <li><b>0.707</b> — Butterworth, maximally flat. The safe default; F3 = Fc.</li>
-        <li><b>0.8–1.0</b> — smaller box, a slight bass bump, punchier but with some overshoot. Above ~1.2 it gets boomy.</li>
-      </ul>
-      <h3>Crossover alignments (2nd order)</h3>
-      <ul>
-        <li><b>Butterworth (Q 0.71)</b> — drivers cross at −3 dB; on-axis sum is +3 dB. Tweeter usually wired reverse polarity.</li>
-        <li><b>Linkwitz-Riley (Q 0.5)</b> — cross at −6 dB and sums flat on-axis. In <b>2nd-order</b> LR the tweeter must be wired <b>reverse polarity</b> to sum flat — it is 4th-order LR that sums flat in phase. The go-to even-order alignment.</li>
-        <li><b>Bessel (Q 0.58)</b> — best transient/phase behaviour, gentler than Butterworth in the summing region.</li>
-      </ul>
-      <h3>Formulas used here</h3>
-      <p>1st order: <code>L = R/2πf</code> · <code>C = 1/2πfR</code></p>
-      <p>2nd order LP: <code>L = R/(2πf·Q)</code> · <code>C = Q/(2πf·R)</code> &nbsp;— HP swaps L↔C by duality.</p>
-      <p>Sealed: <code>α = (Qtc/Qts)²−1</code> · <code>Vb = Vas/α</code> · <code>Fc = (Qtc/Qts)·Fs</code></p>
-      <p>Ported (empirical maximally-flat): <code>Vb = 20·Qts³·³·Vas</code> · <code>Fb = (Vas/Vb)⁰·³¹·Fs</code> · <code>F3 = (Vas/Vb)⁰·⁴⁴·Fs</code></p>
-      <p>Port length: <code>Lv = 23562·d²/(Fb²·Vb) − 0.73·d</code> (cm, litres)</p>
-      <p>Zobel: <code>Rz ≈ 1.25·Re</code> · <code>Cz = Le/Rz²</code> &nbsp;·&nbsp; L-pad: <code>Rs = Z(1−10^(−dB/20))</code> · <code>Rp = Z/(10^(dB/20)−1)</code></p>
-      <p class="hint" style="margin-top:14px">These are engineering approximations into ideal loads. They get you a buildable starting point; real driver curves need measurement-based design.</p>
-    </div>
-  </section>
+    </section>
+  </main>
 
   <footer>
-    Speaker Bench · runs entirely in your browser — nothing is uploaded · drivers live in this browser only (use Export to move them)<br>
-    Numbers are starting points for measurement-based design, not a substitute for it. Double-check anything that costs MDF or a driver.
+    <p>Created by CMazzetti</p>
   </footer>
-</div>
-
-<script>
-/* ---------- storage (graceful: persists when run locally, no-ops in sandbox) ---------- */
-const store = {
-  get(){ try{ const v=JSON.parse(localStorage.getItem('sb_drivers')||'[]'); return Array.isArray(v)?v:mem; }catch(e){ return mem; } },
-  set(v){ mem=v; try{ localStorage.setItem('sb_drivers',JSON.stringify(v)); }catch(e){} }
-};
-let mem = [];
-
-/* ---------- standard component values ---------- */
-const CAPS=[0.10,0.15,0.22,0.33,0.47,0.68,1.0,1.5,2.2,3.3,3.9,4.7,5.6,6.8,8.2,10,12,15,18,22,27,33,39,47,56,68,82,100];
-const INDS=[0.10,0.12,0.15,0.18,0.22,0.27,0.33,0.39,0.47,0.56,0.68,0.82,1.0,1.2,1.5,1.8,2.2,2.7,3.3,3.9,4.7,5.6,6.8,8.2,10];
-const RES=[1.0,1.2,1.5,1.8,2.2,2.7,3.3,3.9,4.7,5.6,6.8,8.2,10,12,15,18,22,27,33];
-const near=(v,a)=>a.reduce((p,c)=>Math.abs(c-v)<Math.abs(p-v)?c:p);
-const fmt=(n,d=2)=>Number.isFinite(n)?n.toFixed(d):'—';
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-/* ---------- tabs ---------- */
-document.querySelectorAll('#tabs button').forEach(b=>{
-  b.onclick=()=>{
-    document.querySelectorAll('#tabs button').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    document.getElementById('v-'+b.dataset.v).classList.add('active');
-    if(b.dataset.v==='enclosure')calcEnc();
-    if(b.dataset.v==='crossover'){calcXO();calcZobel();calcLpad();}
-    if(b.dataset.v==='system')calcSys();
-  };
-});
-
-/* ========================= DRIVERS ========================= */
-function addDriver(){
-  const g=id=>document.getElementById(id).value;
-  const name=g('d-name').trim();
-  if(!name){document.getElementById('d-name').focus();return;}
-  const d={id:Date.now(),name,type:g('d-type'),
-    fs:+g('d-fs'),qts:+g('d-qts'),vas:+g('d-vas'),qes:+g('d-qes'),qms:+g('d-qms'),
-    re:+g('d-re'),le:+g('d-le'),sd:+g('d-sd'),sens:+g('d-sens')};
-  const arr=store.get(); arr.push(d); store.set(arr);
-  ['d-name','d-fs','d-qts','d-vas','d-qes','d-qms','d-re','d-le','d-sd','d-sens'].forEach(i=>document.getElementById(i).value='');
-  renderDrivers(); fillSelects();
-}
-function delDriver(id){ store.set(store.get().filter(d=>d.id!==id)); renderDrivers(); fillSelects(); }
-function renderDrivers(){
-  const arr=store.get(), el=document.getElementById('drv-list');
-  if(!arr.length){el.innerHTML='<div class="empty">No drivers yet. Add one on the left, or load the example set.</div>';return;}
-  el.innerHTML='<div class="drvgrid">'+arr.map(d=>{
-    const p=[]; if(d.fs)p.push('Fs '+d.fs+' Hz'); if(d.qts)p.push('Qts '+d.qts);
-    if(d.vas)p.push('Vas '+d.vas+' L'); if(d.re)p.push('Re '+d.re+' Ω'); if(d.le)p.push('Le '+d.le+' mH');
-    return `<div class="drv"><button class="x" onclick="delDriver(${d.id})" title="delete">×</button>
-      <div class="name">${esc(d.name)}</div><div class="type">${esc(d.type)}</div>
-      <div class="params">${p.join(' · ')||'no params'}</div></div>`;
-  }).join('')+'</div>';
-}
-function fillSelects(){
-  const arr=store.get();
-  document.querySelectorAll('#enc-driver, .xo-drv').forEach(sel=>{
-    const cur=sel.value;
-    sel.innerHTML='<option value="">— manual entry —</option>'+arr.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('');
-    sel.value=cur;
-  });
-}
-function pullDriver(which){
-  const id=+document.getElementById('enc-driver').value;
-  const d=store.get().find(x=>x.id===id); if(!d)return;
-  document.getElementById('enc-fs').value=d.fs||'';
-  document.getElementById('enc-qts').value=d.qts||'';
-  document.getElementById('enc-qes').value=d.qes||'';
-  document.getElementById('enc-vas').value=d.vas||'';
-  calcEnc();
-}
-function pullXO(){
-  const arr=store.get();
-  const dw=arr.find(x=>x.id===+document.getElementById('xo-dw').value);
-  const dt=arr.find(x=>x.id===+document.getElementById('xo-dt').value);
-  if(dw){ if(dw.re){document.getElementById('xo-zw').value=dw.re; document.getElementById('z-re').value=dw.re;}
-          if(dw.le)document.getElementById('z-le').value=dw.le; }
-  if(dt&&dt.re){ document.getElementById('xo-zt').value=dt.re; document.getElementById('lp-z').value=dt.re; }
-  calcXO(); calcZobel(); calcLpad();
-}
-function exportDrivers(){
-  const data=store.get();
-  if(!data.length){alert('Nothing to export yet — add a driver first.');return;}
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
-  a.download='speaker-bench-drivers.json'; a.click(); URL.revokeObjectURL(a.href);
-}
-function importDrivers(inp){
-  const f=inp.files[0]; if(!f)return;
-  f.text().then(t=>{
-    const v=JSON.parse(t); if(!Array.isArray(v))throw 0;
-    const cur=store.get();
-    v.forEach((d,i)=>{ if(d&&d.name)cur.push({...d,id:Date.now()+i}); });
-    store.set(cur); renderDrivers(); fillSelects();
-  }).catch(()=>alert("That file didn't look like a Speaker Bench export."));
-  inp.value='';
-}
-function shareLink(){
-  const ids=['enc-fs','enc-qts','enc-qes','enc-vas','enc-qtc','enc-pd','enc-pn'];
-  const parts=ids.map(i=>encodeURIComponent(document.getElementById(i).value||''));
-  parts.push(document.getElementById('enc-ratio').value);
-  const url=location.href.split('#')[0]+'#enc='+parts.join(',');
-  const done=()=>{const b=document.getElementById('share-btn'),t=b.textContent;
-    b.textContent='Copied ✓'; setTimeout(()=>b.textContent=t,1600);};
-  (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(url):Promise.reject())
-    .then(done).catch(()=>prompt('Copy this link:',url));
-}
-function loadHash(){
-  const m=location.hash.match(/^#enc=(.+)$/); if(!m)return;
-  const p=m[1].split(',');
-  const ids=['enc-fs','enc-qts','enc-qes','enc-vas','enc-qtc','enc-pd','enc-pn'];
-  ids.forEach((id,k)=>{ if(p[k])document.getElementById(id).value=decodeURIComponent(p[k]); });
-  if(p[7])document.getElementById('enc-ratio').value=p[7];
-  document.querySelector('#tabs button[data-v="enclosure"]').click();
-}
-function loadDemo(){
-  const demo=[
-    {id:1,name:'Satori MW19P-8',type:'Woofer',fs:33,qts:0.34,vas:33,qes:0.37,qms:3.9,re:5.6,le:0.29,sd:135,sens:88},
-    {id:2,name:'Satori TW29RN-B-8',type:'Tweeter',fs:560,qts:0,vas:0,qes:0,qms:0,re:5.3,le:0.05,sd:9,sens:92},
-    {id:3,name:'SB17NRX2C35-4',type:'Woofer',fs:36,qts:0.34,vas:24,qes:0.39,qms:2.6,re:2.9,le:0.42,sd:127,sens:87}
-  ];
-  store.set(demo); renderDrivers(); fillSelects();
-}
-
-/* ========================= ENCLOSURE ========================= */
-function calcEnc(){
-  const g=id=>+document.getElementById(id).value;
-  let fs=g('enc-fs'), qts=g('enc-qts'), qes=g('enc-qes'), vas=g('enc-vas'), qtc=g('enc-qtc');
-  const out=document.getElementById('enc-out');
-  const ebpEl=document.getElementById('enc-ebp'), recEl=document.getElementById('enc-rec');
-
-  if(!(fs>0&&qts>0&&vas>0)){ out.innerHTML='<div class="note">Enter Fs, Qts and Vas (a saved woofer/sub is easiest).</div>';
-    ebpEl.textContent='—'; recEl.innerHTML=''; drawEncPlot(null); return; }
-
-  // EBP + recommendation
-  const ebp = qes>0 ? fs/qes : null;
-  ebpEl.innerHTML = ebp? fmt(ebp,0):'<small>need Qes</small>';
-  let rec='either',pill='either',txt='Either alignment works — pick by goal.';
-  if(ebp!==null){
-    if(ebp<50){rec='SEALED';pill='sealed';txt='Driver leans sealed — tight, forgiving, gentle rolloff.';}
-    else if(ebp>100){rec='PORTED';pill='ported';txt='Driver leans ported — more output for the size.';}
-  }
-  recEl.innerHTML=`<div class="stat" style="margin:0"><div class="lbl">Wants</div>
-    <div class="num"><span class="pill ${pill}">${rec}</span></div></div>`;
-
-  // SEALED
-  let sealHtml, Fc=null;
-  const alpha=Math.pow(qtc/qts,2)-1;
-  if(alpha<=0){
-    sealHtml=`<div class="note bad">Target Qtc (${qtc}) must be higher than the driver's Qts (${qts}) for a sealed box. Raise Qtc, or this driver really wants to be ported.</div>`;
-  }else{
-    const Vb=vas/alpha; Fc=(qtc/qts)*fs;
-    const t=1/(qtc*qtc)-2;
-    const F3=Fc*Math.sqrt((t+Math.sqrt(t*t+4))/2);
-    sealHtml=`<div class="readout"><span class="k">Box volume Vb</span><span class="v big">${fmt(Vb,1)}<small>L net</small></span></div>
-      <div class="readout"><span class="k">System Fc</span><span class="v">${fmt(Fc,1)}<small>Hz</small></span></div>
-      <div class="readout"><span class="k">−3 dB · F3</span><span class="v">${fmt(F3,1)}<small>Hz</small></span></div>
-      ${dimsBlock(Vb)}`;
-  }
-
-  // PORTED
-  let portHtml, F3p=null;
-  if(qts>0.7){
-    portHtml=`<div class="note warn">Qts ${qts} is high for a vented box — it'll want a large enclosure and won't gain much. Sealed is the better call here.</div>`;
-  }else{
-    const Vb=20*Math.pow(qts,3.3)*vas;
-    const Fb=Math.pow(vas/Vb,0.31)*fs;
-    F3p=Math.pow(vas/Vb,0.44)*fs;
-    // port length
-    const d=g('enc-pd')||5, n=Math.max(1,Math.round(g('enc-pn')||1));
-    const Lv=23562.5*d*d*n/(Fb*Fb*Vb)-0.732*d;   // n ports: area scales with n, end-correction is per-port
-    let portWarn='';
-    if(Lv<=0) portWarn='<div class="note warn">Port comes out at zero length — that port is too wide for this tuning. Use a smaller diameter.</div>';
-    else if(Lv>40) portWarn=`<div class="note warn">Each port is ${fmt(Lv,0)} cm — long. Widen it (bigger dia), add ports, or fold it / use a slot so it fits the box.</div>`;
-    else if(d<4 && Vb>15) portWarn='<div class="note warn">Narrow port in a biggish box may chuff at volume. Consider a wider or flared port.</div>';
-    portHtml=`<div class="readout"><span class="k">Box volume Vb</span><span class="v big">${fmt(Vb,1)}<small>L net</small></span></div>
-      <div class="readout"><span class="k">Tuning Fb</span><span class="v">${fmt(Fb,1)}<small>Hz</small></span></div>
-      <div class="readout"><span class="k">−3 dB · F3</span><span class="v">${fmt(F3p,1)}<small>Hz</small></span></div>
-      <div class="readout"><span class="k">Port length ×${n}</span><span class="v">${fmt(Lv,1)}<small>cm each · ⌀${fmt(d,1)}</small></span></div>
-      ${portWarn}${dimsBlock(Vb)}`;
-  }
-
-  out.innerHTML=`<div class="note">${txt}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div><div class="eyebrow" style="color:var(--copper)">Sealed</div>${sealHtml}</div>
-      <div><div class="eyebrow" style="color:var(--cyan)">Ported</div>${portHtml}</div>
-    </div>`;
-
-  drawEncPlot({Fc,qtc,F3p});
-}
-function dimsBlock(Vb){
-  const r=document.getElementById('enc-ratio').value;
-  const ratios={golden:[1,1.618,2.618],compact:[1,1.26,1.59],tall:[1,1.4,3.0]}[r];
-  const Vcm3=Vb*1000;
-  const k=Math.cbrt(Vcm3/(ratios[0]*ratios[1]*ratios[2]));
-  const W=k*ratios[0],H=k*ratios[1],D=k*ratios[2];
-  return `<div class="note" style="border-left-color:var(--faint)">Internal box ≈ <b style="color:var(--ink)">${fmt(W,1)} × ${fmt(H,1)} × ${fmt(D,1)} cm</b> (W×H×D, net).
-    Add panel thickness for external size, and grow it ~10–15% to offset driver, bracing &amp; port displacement.</div>`;
-}
-
-/* enclosure response plot */
-function drawEncPlot(d){
-  const c=document.getElementById('enc-plot'),x=c.getContext('2d');
-  const W=c.width,H=c.height; x.clearRect(0,0,W,H);
-  const f0=10,f1=300,dbMin=-24,dbMax=6,pad=34;
-  const fx=f=>pad+(Math.log10(f)-Math.log10(f0))/(Math.log10(f1)-Math.log10(f0))*(W-pad-8);
-  const fy=db=>10+(dbMax-db)/(dbMax-dbMin)*(H-10-20);
-  grid(x,W,H,f0,f1,dbMin,dbMax,fx,fy,[10,20,30,50,100,200,300]);
-  if(!d)return;
-  // sealed 2nd-order HP (Fc, Qtc)
-  if(d.Fc){ trace(x,fx,fy,f0,f1,'#d98c4a',f=>{
-    const r=f/d.Fc; const m=r*r/Math.sqrt(Math.pow(1-r*r,2)+Math.pow(r/d.qtc,2));
-    return 20*Math.log10(m);
-  }); }
-  // ported idealised 4th-order Butterworth HP at F3
-  if(d.F3p){ trace(x,fx,fy,f0,f1,'#35d0c8',f=>{
-    const r=f/d.F3p; const m=Math.pow(r,4)/Math.sqrt(1+Math.pow(r,8));
-    return 20*Math.log10(m);
-  }); }
-}
-
-/* ========================= CROSSOVER ========================= */
-function calcXO(){
-  const g=id=>+document.getElementById(id).value;
-  const fc=g('xo-fc'),order=g('xo-order'),Q=g('xo-align'),Rw=g('xo-zw'),Rt=g('xo-zt');
-  document.getElementById('xo-align-wrap').style.display = order===2?'grid':'none';
-  const w=2*Math.PI*fc;
-  const H=v=>v*1000, F=v=>v*1e6; // to mH / µF
-  let lp=[],hp=[];
-  if(order===1){
-    lp=[['L1',H(Rw/w),'mH',INDS]];
-    hp=[['C1',F(1/(w*Rt)),'µF',CAPS]];
-  }else if(order===2){
-    lp=[['L1',H(Rw/(w*Q)),'mH',INDS],['C1',F(Q/(w*Rw)),'µF',CAPS]];
-    hp=[['C2',F(1/(w*Q*Rt)),'µF',CAPS],['L2',H(Q*Rt/w),'mH',INDS]];
-  }else{ // 3rd Butterworth
-    lp=[['L1',H(1.5*Rw/w),'mH',INDS],['C1',F(1.3333/(w*Rw)),'µF',CAPS],['L2',H(0.5*Rw/w),'mH',INDS]];
-    hp=[['C2',F(0.6667/(w*Rt)),'µF',CAPS],['L3',H(0.75*Rt/w),'mH',INDS],['C3',F(2.0/(w*Rt)),'µF',CAPS]];
-  }
-  const rows=arr=>arr.map(([n,v,u,std])=>`<tr><td>${n}</td><td class="val">${fmt(v,v<1?3:2)} ${u}</td><td class="near">${near(v,std)} ${u}</td></tr>`).join('');
-  const head='<tr><th></th><th style="text-align:right">Ideal</th><th style="text-align:right">Nearest</th></tr>';
-  document.getElementById('xo-lp').innerHTML=head+rows(lp);
-  document.getElementById('xo-hp').innerHTML=head+rows(hp);
-
-  // summation note
-  const sn=document.getElementById('xo-sumnote');
-  if(order===2 && Q==0.5){sn.textContent='reverse tweeter → sums flat';sn.style.color='var(--green)';sn.style.borderColor='var(--green)';}
-  else if(order===2){sn.textContent='reverse tweeter · ~+3 dB at fc';sn.style.color='var(--amber)';sn.style.borderColor='var(--amber)';}
-  else if(order===1){sn.textContent='sums flat · in phase';sn.style.color='var(--green)';sn.style.borderColor='var(--green)';}
-  else{sn.textContent='sums flat · either polarity';sn.style.color='var(--cyan)';sn.style.borderColor='var(--cyan)';}
-
-  drawXOplot(fc,order,Q);
-  drawSch(order,lp,hp);
-}
-function drawXOplot(fc,order,Q){
-  const c=document.getElementById('xo-plot'),x=c.getContext('2d');
-  const W=c.width,H=c.height; x.clearRect(0,0,W,H);
-  const f0=20,f1=20000,dbMin=-30,dbMax=3,pad=34;
-  const fx=f=>pad+(Math.log10(f)-Math.log10(f0))/(Math.log10(f1)-Math.log10(f0))*(W-pad-8);
-  const fy=db=>10+(dbMax-db)/(dbMax-dbMin)*(H-10-20);
-  grid(x,W,H,f0,f1,dbMin,dbMax,fx,fy,[20,50,100,200,500,1000,2000,5000,10000,20000]);
-  const mag=(r,type)=>{ // r=f/fc
-    if(order===1) return type==='lp'?1/Math.sqrt(1+r*r):r/Math.sqrt(1+r*r);
-    if(order===2){ const den=Math.sqrt(Math.pow(1-r*r,2)+Math.pow(r/Q,2));
-      return type==='lp'?1/den:(r*r)/den; }
-    return type==='lp'?1/Math.sqrt(1+Math.pow(r,6)):Math.pow(r,3)/Math.sqrt(1+Math.pow(r,6));
-  };
-  trace(x,fx,fy,f0,f1,'#d98c4a',f=>20*Math.log10(mag(f/fc,'lp')));
-  trace(x,fx,fy,f0,f1,'#35d0c8',f=>20*Math.log10(mag(f/fc,'hp')));
-  // fc marker
-  x.strokeStyle='rgba(230,180,80,.35)';x.setLineDash([3,3]);x.beginPath();
-  x.moveTo(fx(fc),10);x.lineTo(fx(fc),H-20);x.stroke();x.setLineDash([]);
-}
-function drawSch(order,lp,hp){
-  const s=document.getElementById('xo-sch');
-  const wire='stroke:#2a3540;stroke-width:2;fill:none';
-  if(order===3){ s.innerHTML=`<text x="280" y="95" text-anchor="middle" font-size="12">3rd-order — build straight from the table: LP is L1 → shunt C1 → L2 · HP is C2 → shunt L3 → C3</text>`; return; }
-  if(order===1){
-    const L1=lp[0][1],C1=hp[0][1];
-    s.innerHTML=`
-     <circle cx="20" cy="60" r="4" fill="#35d0c8"/><text x="12" y="48" font-size="10">IN+</text>
-     <circle cx="20" cy="150" r="4" fill="#35d0c8"/><text x="12" y="168" font-size="10">IN−</text>
-     <line x1="20" y1="60" x2="140" y2="60" style="${wire}"/>
-     <rect x="140" y="52" width="46" height="16" rx="3" fill="#1c262f" stroke="#d98c4a"/><text x="163" y="64" text-anchor="middle" font-size="10" fill="#d98c4a">L1</text>
-     <line x1="186" y1="60" x2="326" y2="60" style="${wire}"/>
-     <circle cx="340" cy="60" r="14" fill="none" stroke="#2a3540" stroke-width="2"/><text x="340" y="64" text-anchor="middle" font-size="9">W</text>
-     <line x1="340" y1="74" x2="340" y2="150" style="${wire}"/>
-     <line x1="60" y1="60" x2="60" y2="120" style="${wire}"/>
-     <line x1="60" y1="120" x2="142" y2="120" style="${wire}"/>
-     <line x1="142" y1="112" x2="142" y2="128" style="stroke:#35d0c8;stroke-width:2"/><line x1="148" y1="112" x2="148" y2="128" style="stroke:#35d0c8;stroke-width:2"/>
-     <text x="145" y="104" text-anchor="middle" font-size="10" fill="#35d0c8">C1</text>
-     <line x1="148" y1="120" x2="286" y2="120" style="${wire}"/>
-     <circle cx="300" cy="120" r="14" fill="none" stroke="#2a3540" stroke-width="2"/><text x="300" y="124" text-anchor="middle" font-size="9">T</text>
-     <line x1="300" y1="134" x2="300" y2="150" style="${wire}"/>
-     <line x1="20" y1="150" x2="340" y2="150" style="${wire}"/>
-     <text x="372" y="60" font-size="11" fill="#d98c4a">L1 ${fmt(L1,2)} mH → woofer</text>
-     <text x="372" y="120" font-size="11" fill="#35d0c8">C1 ${fmt(C1,2)} µF → tweeter</text>
-     <text x="372" y="150" font-size="11" fill="#93a1ac">bottom rail = return (−)</text>`;
-    return;
-  }
-  const L1=lp[0][1],C1=lp[1][1],C2=hp[0][1],L2=hp[1][1];
-  s.innerHTML=`
-   <circle cx="20" cy="40" r="4" fill="#35d0c8"/><text x="12" y="28" font-size="10">IN+</text>
-   <circle cx="20" cy="170" r="4" fill="#35d0c8"/><text x="12" y="186" font-size="10">IN−</text>
-   <line x1="20" y1="40" x2="140" y2="40" style="${wire}"/>
-   <rect x="140" y="32" width="46" height="16" rx="3" fill="#1c262f" stroke="#d98c4a"/><text x="163" y="44" text-anchor="middle" font-size="10" fill="#d98c4a">L1</text>
-   <line x1="186" y1="40" x2="326" y2="40" style="${wire}"/>
-   <line x1="230" y1="40" x2="230" y2="58" style="${wire}"/>
-   <line x1="222" y1="58" x2="238" y2="58" style="stroke:#35d0c8;stroke-width:2"/><line x1="222" y1="63" x2="238" y2="63" style="stroke:#35d0c8;stroke-width:2"/>
-   <text x="252" y="65" font-size="10" fill="#35d0c8">C1</text>
-   <line x1="230" y1="63" x2="230" y2="170" style="${wire}"/>
-   <circle cx="340" cy="40" r="14" fill="none" stroke="#2a3540" stroke-width="2"/><text x="340" y="44" text-anchor="middle" font-size="9">W</text>
-   <line x1="340" y1="54" x2="340" y2="170" style="${wire}"/>
-   <line x1="60" y1="40" x2="60" y2="105" style="${wire}"/>
-   <line x1="60" y1="105" x2="142" y2="105" style="${wire}"/>
-   <line x1="142" y1="97" x2="142" y2="113" style="stroke:#35d0c8;stroke-width:2"/><line x1="148" y1="97" x2="148" y2="113" style="stroke:#35d0c8;stroke-width:2"/>
-   <text x="145" y="89" text-anchor="middle" font-size="10" fill="#35d0c8">C2</text>
-   <line x1="148" y1="105" x2="222" y2="105" style="${wire}"/>
-   <path d="M222 105 a 8 8 0 0 1 16 0" style="${wire}"/>
-   <line x1="238" y1="105" x2="286" y2="105" style="${wire}"/>
-   <line x1="262" y1="105" x2="262" y2="122" style="${wire}"/>
-   <rect x="239" y="122" width="46" height="16" rx="3" fill="#1c262f" stroke="#d98c4a"/><text x="262" y="134" text-anchor="middle" font-size="10" fill="#d98c4a">L2</text>
-   <line x1="262" y1="138" x2="262" y2="170" style="${wire}"/>
-   <circle cx="300" cy="105" r="14" fill="none" stroke="#2a3540" stroke-width="2"/><text x="300" y="109" text-anchor="middle" font-size="9">T</text>
-   <line x1="300" y1="119" x2="300" y2="170" style="${wire}"/>
-   <line x1="20" y1="170" x2="340" y2="170" style="${wire}"/>
-   <text x="372" y="40" font-size="11" fill="#d98c4a">L1 ${fmt(L1,2)} mH · C1 ${fmt(C1,2)} µF</text>
-   <text x="372" y="58" font-size="11" fill="#93a1ac">low-pass → woofer</text>
-   <text x="372" y="105" font-size="11" fill="#35d0c8">C2 ${fmt(C2,2)} µF · L2 ${fmt(L2,2)} mH</text>
-   <text x="372" y="123" font-size="11" fill="#93a1ac">high-pass → tweeter</text>
-   <text x="372" y="152" font-size="11" fill="#93a1ac">shunts drop to the return rail (−)</text>`;
-}
-
-/* Zobel + L-pad */
-function calcZobel(){
-  const Re=+document.getElementById('z-re').value, Le=+document.getElementById('z-le').value/1000;
-  const out=document.getElementById('z-out');
-  if(!(Re>0&&Le>0)){out.innerHTML='';return;}
-  const Rz=1.25*Re, Cz=Le/(Rz*Rz)*1e6;
-  out.innerHTML=`<div class="readout"><span class="k">R (resistor)</span><span class="v">${near(Rz,RES)}<small>Ω · ${fmt(Rz,1)} calc</small></span></div>
-    <div class="readout"><span class="k">C (in series)</span><span class="v">${near(Cz,CAPS)}<small>µF · ${fmt(Cz,1)} calc</small></span></div>
-    <p class="hint">Wire R+C in series, across the woofer terminals, to tame the rising impedance from voice-coil inductance.</p>`;
-}
-function calcLpad(){
-  const dB=+document.getElementById('lp-db').value, Z=+document.getElementById('lp-z').value;
-  const out=document.getElementById('lp-out');
-  if(!(dB>0&&Z>0)){out.innerHTML='';return;}
-  const Rs=Z*(1-Math.pow(10,-dB/20)), Rp=Z/(Math.pow(10,dB/20)-1);
-  out.innerHTML=`<div class="readout"><span class="k">Series R (before tweeter)</span><span class="v">${near(Rs,RES)}<small>Ω · ${fmt(Rs,2)}</small></span></div>
-    <div class="readout"><span class="k">Parallel R (across tweeter)</span><span class="v">${near(Rp,RES)}<small>Ω · ${fmt(Rp,2)}</small></span></div>
-    <p class="hint">Keeps the load ~${Z} Ω while dropping the tweeter ${dB} dB. Use ≥10 W resistors.</p>`;
-}
-
-/* ========================= SYSTEM ========================= */
-function calcSys(){
-  const t=document.getElementById('sys-type').value;
-  const f3=+document.getElementById('sys-f3').value;
-  const room=document.getElementById('sys-room').value;
-  const out=document.getElementById('sys-out');
-  if(t==='20'){
-    out.innerHTML=`<div class="note">Two speakers carry the full range — no bass management.</div>
-      <ul style="color:var(--dim);font-size:13.5px;line-height:1.8">
-        <li>Design each cabinet to hit the low end you want; there's no sub to lean on.</li>
-        <li>Mind the <b>baffle-step</b> loss (~3–6 dB shelf below where the baffle stops supporting bass) — build the compensation into the crossover.</li>
-        <li>Toe-in and distance-to-wall set your perceived bass more than any spec.</li>
-      </ul>`;
-    return;
-  }
-  // 2.1 / 5.2 crossover point
-  let xo = Math.round(f3*1.5/10)*10;      // ~half-octave above satellite F3
-  let ceiling = room==='ht'?80: room==='desk'?120:100;
-  if(room==='ht' && xo<80) xo=80;         // THX/bass-management convention
-  if(xo>150) xo=150;
-  const localize = xo>=100;
-  out.innerHTML=`
-    <div class="stat"><div class="lbl">Suggested sub crossover</div>
-      <div class="num">${xo} <small>Hz · ${room==='ht'?'LR4 24 dB/oct':'12–24 dB/oct'}</small></div></div>
-    <div class="note ${localize?'warn':'ok'}">${localize
-      ? 'Above ~100 Hz the sub starts to become locatable — keep it near the front and blend carefully.'
-      : 'Below ~80–100 Hz bass is hard to localise, so one sub placement is flexible.'}</div>
-    <ul style="color:var(--dim);font-size:13.5px;line-height:1.8">
-      <li>Set the high-pass on the satellites at least a half-octave above their ${f3} Hz roll-off so they aren't fighting for excursion they don't have.</li>
-      <li>${room==='ht'?'Let the AVR do bass management: set speakers to “Small”, LFE + main, crossover '+xo+' Hz.':'Use a line-level/active crossover or a plate amp with adjustable low-pass around '+xo+' Hz.'}</li>
-      <li><b>Phase &amp; polarity:</b> after placing the sub, flip its phase switch and keep whichever setting is <i>louder</i> through the crossover region — that's the in-phase one.</li>
-      <li><b>Level:</b> match the sub to the satellites by ear with pink noise or a sweep; resist the urge to run it hot.</li>
-      ${t==='52'?'<li>With two subs, spread them (e.g. front + opposite corner) to average out room modes — smoother bass across more seats than one big sub.</li>':''}
-    </ul>
-    <p class="hint">Small sealed satellites already high-pass themselves acoustically; the numbers above assume you'll add a matching electrical high-pass for cleaner blending and more headroom.</p>`;
-}
-
-/* ========================= plot helpers ========================= */
-function grid(x,W,H,f0,f1,dbMin,dbMax,fx,fy,ticks){
-  x.strokeStyle='#202a33';x.fillStyle='#5f6f7b';x.font='10px ui-monospace,monospace';x.lineWidth=1;
-  for(let db=dbMax;db>=dbMin;db-=6){
-    x.beginPath();x.moveTo(30,fy(db));x.lineTo(W-8,fy(db));x.stroke();
-    x.fillText((db>0?'+':'')+db,4,fy(db)+3);
-  }
-  ticks.forEach(f=>{
-    x.beginPath();x.moveTo(fx(f),10);x.lineTo(fx(f),H-20);x.stroke();
-    const lbl=f>=1000?(f/1000)+'k':f;
-    x.fillText(lbl,fx(f)-6,H-6);
-  });
-}
-function trace(x,fx,fy,f0,f1,color,fn){
-  x.strokeStyle=color;x.lineWidth=2.2;x.beginPath();let first=true;
-  for(let i=0;i<=240;i++){
-    const f=f0*Math.pow(f1/f0,i/240);
-    let db=fn(f); if(!Number.isFinite(db))continue; db=Math.max(-40,Math.min(8,db));
-    const px=fx(f),py=fy(db);
-    if(first){x.moveTo(px,py);first=false;}else x.lineTo(px,py);
-  }
-  x.stroke();
-}
-
-/* ---------- init ---------- */
-renderDrivers(); fillSelects(); calcEnc(); calcXO(); calcZobel(); calcLpad(); calcSys();
-loadHash();
-</script>
 </body>
 </html>
