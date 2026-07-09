@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DIY Shopping List</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DIY shopping list for tracking parts, prices, retailers, links, images, priorities, projects and totals.">
+  <meta name="theme-color" content="#111827">
+
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --panel: #ffffff;
+      --panel-soft: #f9fafb;
+      --ink: #111827;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --dark: #111827;
+      --blue: #2563eb;
+      --green: #059669;
+      --amber: #d97706;
+      --red: #dc2626;
+      --purple: #7c3aed;
+      --cyan: #0891b2;
+      --shadow: 0 12px 32px rgba(17, 24, 39, 0.10);
+      --radius: 16px;
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(217,119,6,0.11), transparent 28%),
+        radial-gradient(circle at 90% 10%, rgba(37,99,235,0.12), transparent 30%),
+        var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      line-height: 1.5;
+    }
+
+    header {
+      background:
+        radial-gradient(circle at 20% 10%, rgba(234,88,12,0.34), transparent 35%),
+        radial-gradient(circle at 80% 0%, rgba(37,99,235,0.30), transparent 38%),
+        linear-gradient(135deg, #020617, #111827 65%, #1f2937);
+      color: white;
+      padding: 34px 18px 44px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      letter-spacing: -0.06em;
+      line-height: 1;
+    }
+
+    header p {
+      margin: 14px auto 0;
+      max-width: 780px;
+      color: #d1d5db;
+    }
+
+    .wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 22px 16px 70px;
+    }
+
+    .nav {
+      max-width: 1240px;
+      margin: 0 auto 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back {
+      color: #dbeafe;
+      text-decoration: none;
+      font-weight: 800;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 12px;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .panel, .summary-card, .item-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .summary-card {
+      padding: 15px;
+    }
+
+    .summary-card .num {
+      font-weight: 950;
+      font-size: 1.75rem;
+      letter-spacing: -0.05em;
+      line-height: 1.05;
+    }
+
+    .summary-card .label {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 395px) 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      letter-spacing: -0.03em;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 850;
+      margin-bottom: 5px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: white;
+      color: var(--ink);
+      padding: 10px 11px;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 86px;
+      resize: vertical;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: 3px solid rgba(37, 99, 235, 0.15);
+      border-color: var(--blue);
+    }
+
+    .field { margin-bottom: 12px; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 13px;
+      min-height: 42px;
+      font-weight: 850;
+      cursor: pointer;
+      background: var(--blue);
+      color: white;
+      text-decoration: none;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:hover { filter: brightness(1.06); }
+
+    .btn.secondary {
+      background: var(--panel-soft);
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .btn.green { background: var(--green); }
+    .btn.amber { background: var(--amber); }
+    .btn.red { background: var(--red); }
+    .btn.purple { background: var(--purple); }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 8px;
+    }
+
+    .button-row .btn { flex: 1 1 130px; }
+
+    .note {
+      color: var(--muted);
+      font-size: 0.86rem;
+      margin: 8px 0 0;
+    }
+
+    .warning {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-left: 5px solid var(--amber);
+      color: #7c2d12;
+      border-radius: 12px;
+      padding: 11px 12px;
+      font-size: 0.9rem;
+      margin-bottom: 14px;
+    }
+
+    .edit-banner {
+      display: none;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      font-weight: 850;
+    }
+
+    .editing .edit-banner { display: block; }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr 0.8fr 0.8fr 0.7fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .items {
+      display: grid;
+      gap: 12px;
+    }
+
+    .item-card {
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      min-height: 150px;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .item-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 42px rgba(17, 24, 39, 0.14);
+    }
+
+    .thumb {
+      background: #e5e7eb;
+      min-height: 150px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-weight: 900;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .thumb .placeholder {
+      padding: 12px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .item-body {
+      padding: 14px;
+    }
+
+    .item-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .item-title {
+      margin: 0;
+      font-size: 1.14rem;
+      letter-spacing: -0.03em;
+      overflow-wrap: anywhere;
+    }
+
+    .item-notes {
+      color: #374151;
+      margin: 7px 0 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      padding: 4px 9px;
+      background: #f1f5f9;
+      color: #334155;
+      font-size: 0.75rem;
+      font-weight: 900;
+    }
+
+    .pill.high { background: #fee2e2; color: #991b1b; }
+    .pill.medium { background: #fef3c7; color: #92400e; }
+    .pill.low { background: #dcfce7; color: #166534; }
+    .pill.bought { background: #dcfce7; color: #166534; }
+    .pill.cart { background: #dbeafe; color: #1d4ed8; }
+    .pill.wishlist { background: #f3e8ff; color: #6b21a8; }
+
+    .actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .icon-btn {
+      border: 1px solid var(--line);
+      background: var(--panel-soft);
+      color: var(--ink);
+      border-radius: 9px;
+      padding: 7px 9px;
+      min-width: 36px;
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .icon-btn:hover { background: #e5e7eb; }
+
+    .price {
+      font-family: var(--mono);
+      font-weight: 900;
+      font-size: 1.05rem;
+    }
+
+    .empty {
+      background: var(--panel);
+      border: 2px dashed var(--line);
+      border-radius: var(--radius);
+      padding: 34px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .hidden { display: none !important; }
+
+    .templates {
+      display: grid;
+      gap: 8px;
+    }
+
+    .template {
+      text-align: left;
+      border: 1px solid var(--line);
+      background: var(--panel-soft);
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .template:hover {
+      border-color: var(--blue);
+      background: #eff6ff;
+    }
+
+    footer {
+      color: var(--muted);
+      text-align: center;
+      margin-top: 28px;
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 1060px) {
+      .layout { grid-template-columns: 1fr; }
+      .summary { grid-template-columns: repeat(3, 1fr); }
+      .filters { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 650px) {
+      .summary { grid-template-columns: 1fr 1fr; }
+      .filters, .row { grid-template-columns: 1fr; }
+      .item-card { grid-template-columns: 1fr; }
+      .thumb { height: 190px; }
+      .item-top { flex-direction: column; }
+      .actions { justify-content: flex-start; }
+    }
+
+    @media print {
+      header, .form-panel, .filters, .actions, .button-row, footer { display: none !important; }
+      body { background: white; }
+      .layout { display: block; }
+      .summary-card, .item-card { box-shadow: none; break-inside: avoid; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="nav">
+      <a class="back" href="../">← Back to Project Hub</a>
+    </div>
+    <h1>DIY Shopping List</h1>
+    <p>Track parts, tools, timber, electronics, speaker components, links, photos, priorities and total costs.</p>
+  </header>
+
+  <div class="wrap">
+    <section class="summary" aria-label="Shopping list summary">
+      <div class="summary-card">
+        <div class="num" id="stat-total">0</div>
+        <div class="label">Items</div>
+      </div>
+      <div class="summary-card">
+        <div class="num" id="stat-est">$0</div>
+        <div class="label">Estimated total</div>
+      </div>
+      <div class="summary-card">
+        <div class="num" id="stat-left">$0</div>
+        <div class="label">Still to buy</div>
+      </div>
+      <div class="summary-card">
+        <div class="num" id="stat-bought">0</div>
+        <div class="label">Bought</div>
+      </div>
+      <div class="summary-card">
+        <div class="num" id="stat-priority">0</div>
+        <div class="label">High priority</div>
+      </div>
+    </section>
+
+    <main class="layout">
+      <aside class="panel form-panel" id="form-panel">
+        <div class="edit-banner">Editing item — save changes or cancel editing.</div>
+        <h2 id="form-title">Add item</h2>
+
+        <div class="warning">
+          <strong>Photo preview note:</strong> A static GitHub Pages site usually cannot automatically grab the image from a normal product page because most retailers block browser scraping. This tool can still show photos if you paste a direct image URL, or if the site allows Open Graph preview access.
+        </div>
+
+        <div class="field">
+          <label for="item-name">Item name</label>
+          <input id="item-name" placeholder="e.g. 5Ah Ryobi battery, 6.8µF capacitor, MDF sheet">
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="item-project">Project</label>
+            <input id="item-project" list="project-options" placeholder="e.g. Speaker build, Tools, House">
+            <datalist id="project-options"></datalist>
+          </div>
+          <div class="field">
+            <label for="item-category">Category</label>
+            <select id="item-category">
+              <option>Audio</option>
+              <option>Tools</option>
+              <option>Timber / MDF</option>
+              <option>Electronics</option>
+              <option>Hardware</option>
+              <option>Paint / Finish</option>
+              <option>Home</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="item-store">Store / retailer</label>
+            <input id="item-store" placeholder="e.g. Bunnings, Jaycar, NB Audio">
+          </div>
+          <div class="field">
+            <label for="item-priority">Priority</label>
+            <select id="item-priority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="item-price">Price each ($)</label>
+            <input id="item-price" type="number" step="0.01" min="0" placeholder="0.00">
+          </div>
+          <div class="field">
+            <label for="item-qty">Quantity</label>
+            <input id="item-qty" type="number" step="1" min="1" value="1">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="item-url">Product page URL</label>
+          <input id="item-url" type="url" placeholder="https://...">
+          <p class="note">Used for the “Open link” button. It may also help with image preview if the site allows it.</p>
+        </div>
+
+        <div class="field">
+          <label for="item-image">Image URL</label>
+          <input id="item-image" type="url" placeholder="Paste direct image URL ending in .jpg, .png or .webp">
+          <p class="note">Best option: right-click a product image and copy image address, then paste it here.</p>
+        </div>
+
+        <div class="field">
+          <label for="item-notes">Notes</label>
+          <textarea id="item-notes" placeholder="Add size, specs, reasons, alternatives, delivery notes or measurements..."></textarea>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="item-status">Status</label>
+            <select id="item-status">
+              <option value="wishlist">Wishlist</option>
+              <option value="cart">In cart</option>
+              <option value="bought">Bought</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="item-tags">Tags</label>
+            <input id="item-tags" placeholder="e.g. urgent, sale, speaker">
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button class="btn green" id="save-item" onclick="saveItem()">Add item</button>
+          <button class="btn secondary" onclick="resetForm()">Clear</button>
+          <button class="btn amber" onclick="tryPreview()">Try photo preview</button>
+        </div>
+
+        <p class="note" id="preview-note"></p>
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0;">
+
+        <h2>Quick templates</h2>
+        <div class="templates">
+          <button class="template" onclick="loadTemplate('speaker')">Speaker build part</button>
+          <button class="template" onclick="loadTemplate('tool')">Power tool / battery</button>
+          <button class="template" onclick="loadTemplate('hardware')">Screws, bolts or brackets</button>
+          <button class="template" onclick="loadTemplate('timber')">MDF / timber sheet</button>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0;">
+
+        <h2>Backup and tools</h2>
+        <div class="button-row">
+          <button class="btn purple" onclick="exportItems()">Export JSON</button>
+          <button class="btn secondary" onclick="document.getElementById('import-file').click()">Import JSON</button>
+          <button class="btn secondary" onclick="window.print()">Print</button>
+          <button class="btn red" onclick="deleteBought()">Delete bought</button>
+        </div>
+        <input id="import-file" class="hidden" type="file" accept="application/json,.json" onchange="importItems(this)">
+        <p class="note">Items save in this browser using local storage. Export JSON to move your list to another device.</p>
+      </aside>
+
+      <section>
+        <div class="panel">
+          <h2>Shopping list</h2>
+
+          <section class="filters" aria-label="Filters">
+            <div>
+              <label for="search">Search</label>
+              <input id="search" type="search" placeholder="Search item, notes, store, tags...">
+            </div>
+            <div>
+              <label for="filter-project">Project</label>
+              <select id="filter-project"><option value="all">All projects</option></select>
+            </div>
+            <div>
+              <label for="filter-status">Status</label>
+              <select id="filter-status">
+                <option value="all">All</option>
+                <option value="wishlist">Wishlist</option>
+                <option value="cart">In cart</option>
+                <option value="bought">Bought</option>
+              </select>
+            </div>
+            <div>
+              <label for="filter-category">Category</label>
+              <select id="filter-category">
+                <option value="all">All categories</option>
+              </select>
+            </div>
+            <div>
+              <label for="sort-by">Sort</label>
+              <select id="sort-by">
+                <option value="created-desc">Newest</option>
+                <option value="price-desc">Price high</option>
+                <option value="price-asc">Price low</option>
+                <option value="priority-desc">Priority</option>
+                <option value="name-asc">A–Z</option>
+              </select>
+            </div>
+          </section>
+
+          <div class="button-row" style="margin-bottom:14px">
+            <button class="btn secondary" onclick="clearFilters()">Clear filters</button>
+          </div>
+
+          <div class="items" id="items"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      DIY Shopping List · runs in your browser · photos use URLs only · data is saved locally on this device.
+    </footer>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "cm_diy_shopping_list_v1";
+    let items = [];
+    let editingId = null;
+
+    const $ = id => document.getElementById(id);
+    const priorityRank = { high: 3, medium: 2, low: 1 };
+
+    function money(n) {
+      return "$" + (Number(n) || 0).toFixed(2);
+    }
+
+    function todayString() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    }
+
+    function loadItems() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        items = Array.isArray(saved) ? saved : [];
+      } catch {
+        items = [];
+      }
+
+      if (!items.length) {
+        items = [
+          {
+            id: crypto.randomUUID(),
+            name: "Example: 6.8µF polypropylene capacitor",
+            project: "Speaker build",
+            category: "Audio",
+            store: "Example retailer",
+            price: 8.50,
+            qty: 2,
+            priority: "medium",
+            status: "wishlist",
+            url: "",
+            image: "",
+            notes: "Delete or edit this example. Use this list for parts, tools and build materials.",
+            tags: ["speaker", "crossover"],
+            createdAt: Date.now()
+          }
+        ];
+        persist();
+      }
+
+      render();
+    }
+
+    function persist() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function saveItem() {
+      const name = $("item-name").value.trim();
+      if (!name) {
+        $("item-name").focus();
+        return;
+      }
+
+      const data = {
+        name,
+        project: $("item-project").value.trim() || "General",
+        category: $("item-category").value,
+        store: $("item-store").value.trim(),
+        price: Number($("item-price").value) || 0,
+        qty: Math.max(1, Number($("item-qty").value) || 1),
+        priority: $("item-priority").value,
+        status: $("item-status").value,
+        url: $("item-url").value.trim(),
+        image: $("item-image").value.trim(),
+        notes: $("item-notes").value.trim(),
+        tags: $("item-tags").value.split(",").map(t => t.trim()).filter(Boolean)
+      };
+
+      if (editingId) {
+        const existing = items.find(i => i.id === editingId);
+        if (!existing) return;
+        Object.assign(existing, data);
+      } else {
+        items.unshift({
+          id: crypto.randomUUID(),
+          createdAt: Date.now(),
+          ...data
+        });
+      }
+
+      persist();
+      resetForm();
+      render();
+    }
+
+    function resetForm() {
+      editingId = null;
+      $("form-panel").classList.remove("editing");
+      $("form-title").textContent = "Add item";
+      $("save-item").textContent = "Add item";
+      $("item-name").value = "";
+      $("item-project").value = "";
+      $("item-category").value = "Audio";
+      $("item-store").value = "";
+      $("item-price").value = "";
+      $("item-qty").value = "1";
+      $("item-priority").value = "medium";
+      $("item-status").value = "wishlist";
+      $("item-url").value = "";
+      $("item-image").value = "";
+      $("item-notes").value = "";
+      $("item-tags").value = "";
+      $("preview-note").textContent = "";
+    }
+
+    function editItem(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+
+      editingId = id;
+      $("form-panel").classList.add("editing");
+      $("form-title").textContent = "Edit item";
+      $("save-item").textContent = "Save changes";
+
+      $("item-name").value = item.name;
+      $("item-project").value = item.project || "";
+      $("item-category").value = item.category || "Other";
+      $("item-store").value = item.store || "";
+      $("item-price").value = item.price || "";
+      $("item-qty").value = item.qty || 1;
+      $("item-priority").value = item.priority || "medium";
+      $("item-status").value = item.status || "wishlist";
+      $("item-url").value = item.url || "";
+      $("item-image").value = item.image || "";
+      $("item-notes").value = item.notes || "";
+      $("item-tags").value = (item.tags || []).join(", ");
+
+      window.scrollTo({ top: 0, behaviour: "smooth" });
+    }
+
+    function deleteItem(id) {
+      if (!confirm("Delete this item?")) return;
+      items = items.filter(i => i.id !== id);
+      persist();
+      render();
+    }
+
+    function duplicateItem(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+
+      items.unshift({
+        ...JSON.parse(JSON.stringify(item)),
+        id: crypto.randomUUID(),
+        name: item.name + " copy",
+        createdAt: Date.now()
+      });
+
+      persist();
+      render();
+    }
+
+    function setStatus(id, status) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      item.status = status;
+      persist();
+      render();
+    }
+
+    function totalOf(item) {
+      return (Number(item.price) || 0) * (Number(item.qty) || 1);
+    }
+
+    function render() {
+      renderFilterOptions();
+      renderStats();
+      renderItems();
+    }
+
+    function renderFilterOptions() {
+      const projects = [...new Set(items.map(i => i.project || "General"))].sort();
+      const categories = [...new Set(items.map(i => i.category || "Other"))].sort();
+
+      const projectValue = $("filter-project").value;
+      $("filter-project").innerHTML = '<option value="all">All projects</option>' +
+        projects.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join("");
+      $("filter-project").value = projects.includes(projectValue) ? projectValue : "all";
+
+      const categoryValue = $("filter-category").value;
+      $("filter-category").innerHTML = '<option value="all">All categories</option>' +
+        categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+      $("filter-category").value = categories.includes(categoryValue) ? categoryValue : "all";
+
+      $("project-options").innerHTML = projects.map(p => `<option value="${escapeHtml(p)}"></option>`).join("");
+    }
+
+    function renderStats() {
+      const total = items.reduce((sum, i) => sum + totalOf(i), 0);
+      const left = items.filter(i => i.status !== "bought").reduce((sum, i) => sum + totalOf(i), 0);
+      const bought = items.filter(i => i.status === "bought").length;
+      const high = items.filter(i => i.priority === "high" && i.status !== "bought").length;
+
+      $("stat-total").textContent = items.length;
+      $("stat-est").textContent = money(total);
+      $("stat-left").textContent = money(left);
+      $("stat-bought").textContent = bought;
+      $("stat-priority").textContent = high;
+    }
+
+    function filteredItems() {
+      const search = $("search").value.trim().toLowerCase();
+      const project = $("filter-project").value;
+      const status = $("filter-status").value;
+      const category = $("filter-category").value;
+      const sort = $("sort-by").value;
+
+      let result = items.filter(item => {
+        const hay = [
+          item.name, item.project, item.category, item.store, item.notes,
+          ...(item.tags || [])
+        ].join(" ").toLowerCase();
+
+        if (search && !hay.includes(search)) return false;
+        if (project !== "all" && item.project !== project) return false;
+        if (status !== "all" && item.status !== status) return false;
+        if (category !== "all" && item.category !== category) return false;
+        return true;
+      });
+
+      result.sort((a, b) => {
+        if (sort === "created-desc") return b.createdAt - a.createdAt;
+        if (sort === "price-desc") return totalOf(b) - totalOf(a);
+        if (sort === "price-asc") return totalOf(a) - totalOf(b);
+        if (sort === "priority-desc") return priorityRank[b.priority] - priorityRank[a.priority];
+        if (sort === "name-asc") return a.name.localeCompare(b.name);
+        return 0;
+      });
+
+      return result;
+    }
+
+    function renderItems() {
+      const box = $("items");
+      const visible = filteredItems();
+
+      if (!visible.length) {
+        box.innerHTML = `<div class="empty">
+          <h2>No items found</h2>
+          <p>Add an item, or clear your filters to show more results.</p>
+        </div>`;
+        return;
+      }
+
+      box.innerHTML = visible.map(itemHtml).join("");
+    }
+
+    function itemHtml(item) {
+      const tags = (item.tags || []).map(t => `<span class="pill">#${escapeHtml(t)}</span>`).join("");
+      const image = item.image
+        ? `<img src="${escapeAttribute(item.image)}" alt="${escapeAttribute(item.name)}" onerror="this.closest('.thumb').innerHTML='<span class=&quot;placeholder&quot;>Image unavailable</span>'">`
+        : `<span class="placeholder">No image yet</span>`;
+
+      const link = item.url
+        ? `<a class="icon-btn" href="${escapeAttribute(item.url)}" target="_blank" rel="noopener" title="Open product link">↗</a>`
+        : "";
+
+      return `
+        <article class="item-card">
+          <div class="thumb">${image}</div>
+          <div class="item-body">
+            <div class="item-top">
+              <div>
+                <h3 class="item-title">${escapeHtml(item.name)}</h3>
+                <div class="price">${money(totalOf(item))} <span style="color:var(--muted);font-size:.82rem">(${item.qty} × ${money(item.price)})</span></div>
+              </div>
+              <div class="actions">
+                ${link}
+                <button class="icon-btn" onclick="editItem('${item.id}')" title="Edit">✎</button>
+                <button class="icon-btn" onclick="duplicateItem('${item.id}')" title="Duplicate">⧉</button>
+                <button class="icon-btn" onclick="deleteItem('${item.id}')" title="Delete">×</button>
+              </div>
+            </div>
+
+            ${item.notes ? `<p class="item-notes">${escapeHtml(item.notes)}</p>` : ""}
+
+            <div class="meta">
+              <span class="pill ${item.priority}">${capitalise(item.priority)} priority</span>
+              <span class="pill ${item.status}">${statusLabel(item.status)}</span>
+              <span class="pill">${escapeHtml(item.project || "General")}</span>
+              <span class="pill">${escapeHtml(item.category || "Other")}</span>
+              ${item.store ? `<span class="pill">${escapeHtml(item.store)}</span>` : ""}
+              ${tags}
+            </div>
+
+            <div class="button-row">
+              <button class="btn secondary" onclick="setStatus('${item.id}', 'wishlist')">Wishlist</button>
+              <button class="btn secondary" onclick="setStatus('${item.id}', 'cart')">In cart</button>
+              <button class="btn secondary" onclick="setStatus('${item.id}', 'bought')">Bought</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function statusLabel(status) {
+      return status === "cart" ? "In cart" : capitalise(status);
+    }
+
+    async function tryPreview() {
+      const imageField = $("item-image");
+      const urlField = $("item-url");
+      const note = $("preview-note");
+      const pageUrl = urlField.value.trim();
+
+      note.textContent = "";
+
+      if (imageField.value.trim()) {
+        note.textContent = "Image URL already added. Save the item to show it on the card.";
+        return;
+      }
+
+      if (!pageUrl) {
+        note.textContent = "Paste a product page URL first, or paste a direct image URL into the Image URL box.";
+        return;
+      }
+
+      try {
+        note.textContent = "Trying to read the page preview image...";
+        const response = await fetch(pageUrl, { mode: "cors" });
+        const text = await response.text();
+        const match =
+          text.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+          text.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) ||
+          text.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
+
+        if (match && match[1]) {
+          imageField.value = new URL(match[1], pageUrl).href;
+          note.textContent = "Preview image found. Save the item to use it.";
+        } else {
+          note.textContent = "No preview image found. Try right-clicking the product image and choosing Copy image address.";
+        }
+      } catch (err) {
+        note.textContent = "Automatic preview was blocked by the website. Paste a direct image URL instead.";
+      }
+    }
+
+    function clearFilters() {
+      $("search").value = "";
+      $("filter-project").value = "all";
+      $("filter-status").value = "all";
+      $("filter-category").value = "all";
+      $("sort-by").value = "created-desc";
+      renderItems();
+    }
+
+    function deleteBought() {
+      const count = items.filter(i => i.status === "bought").length;
+      if (!count) {
+        alert("There are no bought items to delete.");
+        return;
+      }
+      if (!confirm(`Delete ${count} bought item(s)?`)) return;
+      items = items.filter(i => i.status !== "bought");
+      persist();
+      render();
+    }
+
+    function exportItems() {
+      const blob = new Blob([JSON.stringify(items, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `diy-shopping-list-${todayString()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function importItems(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      file.text().then(text => {
+        const imported = JSON.parse(text);
+        if (!Array.isArray(imported)) throw new Error("Invalid");
+        const cleaned = imported.map(i => ({
+          id: i.id || crypto.randomUUID(),
+          name: i.name || "Untitled item",
+          project: i.project || "General",
+          category: i.category || "Other",
+          store: i.store || "",
+          price: Number(i.price) || 0,
+          qty: Math.max(1, Number(i.qty) || 1),
+          priority: ["low", "medium", "high"].includes(i.priority) ? i.priority : "medium",
+          status: ["wishlist", "cart", "bought"].includes(i.status) ? i.status : "wishlist",
+          url: i.url || "",
+          image: i.image || "",
+          notes: i.notes || "",
+          tags: Array.isArray(i.tags) ? i.tags : [],
+          createdAt: i.createdAt || Date.now()
+        }));
+
+        if (confirm("Import items? This will add them to your current list.")) {
+          items = [...cleaned, ...items];
+          persist();
+          render();
+        }
+      }).catch(() => {
+        alert("That file does not look like a valid DIY Shopping List backup.");
+      }).finally(() => {
+        input.value = "";
+      });
+    }
+
+    function loadTemplate(type) {
+      const templates = {
+        speaker: {
+          name: "Speaker build component",
+          project: "Speaker build",
+          category: "Audio",
+          store: "NB Audio / Jaycar / Parts Express",
+          priority: "medium",
+          tags: "speaker, audio",
+          notes: "Add driver specs, crossover value, quantity and alternative options here."
+        },
+        tool: {
+          name: "Power tool or battery",
+          project: "Tools",
+          category: "Tools",
+          store: "Bunnings",
+          priority: "high",
+          tags: "tool, battery",
+          notes: "Compare price, warranty, charger compatibility and whether it suits existing batteries."
+        },
+        hardware: {
+          name: "Screws, bolts or brackets",
+          project: "Workshop",
+          category: "Hardware",
+          store: "Bunnings",
+          priority: "medium",
+          tags: "hardware",
+          notes: "Record dimensions, material, thread type and quantity."
+        },
+        timber: {
+          name: "MDF or timber sheet",
+          project: "Speaker build",
+          category: "Timber / MDF",
+          store: "Bunnings",
+          priority: "medium",
+          tags: "mdf, timber, cut list",
+          notes: "Add thickness, sheet size, cut requirements and whether a full sheet is needed."
+        }
+      };
+
+      const t = templates[type];
+      $("item-name").value = t.name;
+      $("item-project").value = t.project;
+      $("item-category").value = t.category;
+      $("item-store").value = t.store;
+      $("item-priority").value = t.priority;
+      $("item-tags").value = t.tags;
+      $("item-notes").value = t.notes;
+      $("item-name").focus();
+    }
+
+    function capitalise(s) {
+      return String(s || "").charAt(0).toUpperCase() + String(s || "").slice(1);
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[c]));
+    }
+
+    function escapeAttribute(s) {
+      return escapeHtml(s).replace(/`/g, "&#096;");
+    }
+
+    ["search", "filter-project", "filter-status", "filter-category", "sort-by"].forEach(id => {
+      $(id).addEventListener("input", renderItems);
+      $(id).addEventListener("change", renderItems);
+    });
+
+    loadItems();
+  </script>
+</body>
+</html>
