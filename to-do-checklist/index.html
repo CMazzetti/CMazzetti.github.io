@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>To-Do Checklist — Project Planner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A comprehensive browser-based to-do checklist with categories, priorities, due dates, subtasks, filters, progress tracking, import/export and local saving.">
+  <meta name="theme-color" content="#1f2937">
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --panel: #ffffff;
+      --panel-2: #f9fafb;
+      --ink: #111827;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --dark: #1f2937;
+      --blue: #2563eb;
+      --green: #059669;
+      --amber: #d97706;
+      --red: #dc2626;
+      --purple: #7c3aed;
+      --shadow: 0 8px 24px rgba(17, 24, 39, 0.10);
+      --radius: 14px;
+      --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    header {
+      background: linear-gradient(135deg, #111827, #374151);
+      color: white;
+      padding: 34px 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      letter-spacing: -0.04em;
+    }
+
+    header p {
+      margin: 0;
+      color: #d1d5db;
+      font-size: 1rem;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 22px 16px 70px;
+    }
+
+    .toolbar, .panel, .task-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1.1fr 0.8fr 0.8fr 0.8fr auto;
+      gap: 12px;
+      padding: 16px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 390px) 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .toolbar { grid-template-columns: 1fr 1fr; }
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .toolbar { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr !important; }
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 1.25rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 10px 11px;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: 3px solid rgba(37, 99, 235, 0.16);
+      border-color: var(--blue);
+    }
+
+    .field { margin-bottom: 12px; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn {
+      border: none;
+      background: var(--blue);
+      color: white;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      min-height: 42px;
+    }
+
+    .btn:hover { filter: brightness(1.06); }
+
+    .btn.secondary {
+      background: var(--panel-2);
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .btn.danger { background: var(--red); }
+    .btn.green { background: var(--green); }
+    .btn.amber { background: var(--amber); }
+    .btn.purple { background: var(--purple); }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .button-row .btn { flex: 1 1 135px; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    @media (max-width: 760px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat .num {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .progress-wrap {
+      margin-bottom: 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .progress-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .progress-track {
+      height: 12px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--blue), var(--green));
+      transition: width 0.25s ease;
+    }
+
+    .task-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .task-card {
+      padding: 15px;
+      border-left: 6px solid var(--line);
+    }
+
+    .task-card.priority-high { border-left-color: var(--red); }
+    .task-card.priority-medium { border-left-color: var(--amber); }
+    .task-card.priority-low { border-left-color: var(--green); }
+    .task-card.done { opacity: 0.72; }
+
+    .task-top {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .task-check {
+      width: 22px;
+      height: 22px;
+      margin-top: 4px;
+      cursor: pointer;
+    }
+
+    .task-title {
+      margin: 0 0 4px;
+      font-size: 1.08rem;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .done .task-title {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .task-notes {
+      margin: 6px 0 0;
+      color: #374151;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 9px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .pill.high { background: #fee2e2; color: #991b1b; }
+    .pill.medium { background: #fef3c7; color: #92400e; }
+    .pill.low { background: #dcfce7; color: #166534; }
+    .pill.overdue { background: #fee2e2; color: #991b1b; }
+    .pill.today { background: #dbeafe; color: #1d4ed8; }
+    .pill.done { background: #dcfce7; color: #166534; }
+
+    .actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .icon-btn {
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--ink);
+      border-radius: 9px;
+      padding: 7px 9px;
+      font-weight: 800;
+      cursor: pointer;
+      min-width: 38px;
+    }
+
+    .icon-btn:hover { background: #e5e7eb; }
+
+    .subtasks {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--line);
+    }
+
+    .subtask {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 5px 0;
+      color: #374151;
+      font-size: 0.92rem;
+    }
+
+    .subtask input { width: auto; }
+
+    .subtask.done span {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      border: 2px dashed var(--line);
+      border-radius: var(--radius);
+      padding: 32px 20px;
+      background: var(--panel);
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin: 8px 0 0;
+    }
+
+    .quick-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .template-btn {
+      text-align: left;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .template-btn:hover {
+      border-color: var(--blue);
+      background: #eff6ff;
+    }
+
+    .hidden { display: none !important; }
+
+    .edit-banner {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    .editing .edit-banner { display: block; }
+
+    footer {
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.85rem;
+      margin-top: 28px;
+    }
+
+    @media print {
+      header, .toolbar, .left-panel, .actions, .button-row, footer { display: none !important; }
+      body { background: white; }
+      .wrap { max-width: none; padding: 0; }
+      .grid { display: block; }
+      .task-card, .stat, .progress-wrap { box-shadow: none; break-inside: avoid; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>To-Do Checklist</h1>
+    <p>A comprehensive browser-based task planner with categories, priorities, due dates, progress tracking and local saving.</p>
+  </header>
+
+  <div class="wrap">
+    <section class="toolbar" aria-label="Filters and search">
+      <div>
+        <label for="search">Search tasks</label>
+        <input id="search" type="search" placeholder="Search by title, notes, category or tag...">
+      </div>
+      <div>
+        <label for="filter-status">Status</label>
+        <select id="filter-status">
+          <option value="all">All tasks</option>
+          <option value="active">Active only</option>
+          <option value="done">Completed only</option>
+          <option value="overdue">Overdue</option>
+          <option value="today">Due today</option>
+        </select>
+      </div>
+      <div>
+        <label for="filter-category">Category</label>
+        <select id="filter-category">
+          <option value="all">All categories</option>
+        </select>
+      </div>
+      <div>
+        <label for="sort-by">Sort by</label>
+        <select id="sort-by">
+          <option value="created-desc">Newest first</option>
+          <option value="created-asc">Oldest first</option>
+          <option value="due-asc">Due date</option>
+          <option value="priority-desc">Priority</option>
+          <option value="title-asc">Title A–Z</option>
+        </select>
+      </div>
+      <button class="btn secondary" onclick="clearFilters()">Clear filters</button>
+    </section>
+
+    <section class="stats" aria-label="Task statistics">
+      <div class="stat"><div class="num" id="stat-total">0</div><div class="label">Total tasks</div></div>
+      <div class="stat"><div class="num" id="stat-active">0</div><div class="label">Active</div></div>
+      <div class="stat"><div class="num" id="stat-done">0</div><div class="label">Completed</div></div>
+      <div class="stat"><div class="num" id="stat-overdue">0</div><div class="label">Overdue</div></div>
+    </section>
+
+    <section class="progress-wrap" aria-label="Overall progress">
+      <div class="progress-head">
+        <span>Overall progress</span>
+        <span id="progress-text">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+    </section>
+
+    <main class="grid">
+      <aside class="panel left-panel" id="form-panel">
+        <div class="edit-banner">Editing task — save changes or cancel editing.</div>
+        <h2 id="form-title">Add a task</h2>
+
+        <div class="field">
+          <label for="task-title">Task title</label>
+          <input id="task-title" placeholder="e.g. Finish speaker box design">
+        </div>
+
+        <div class="field">
+          <label for="task-notes">Notes</label>
+          <textarea id="task-notes" placeholder="Add details, links, materials, reminders or steps..."></textarea>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="task-category">Category</label>
+            <input id="task-category" list="category-options" placeholder="e.g. School, Home, Audio, Admin">
+            <datalist id="category-options"></datalist>
+          </div>
+          <div class="field">
+            <label for="task-priority">Priority</label>
+            <select id="task-priority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="task-date">Due date</label>
+            <input id="task-date" type="date">
+          </div>
+          <div class="field">
+            <label for="task-tags">Tags</label>
+            <input id="task-tags" placeholder="e.g. urgent, lesson, build">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="task-subtasks">Checklist / subtasks</label>
+          <textarea id="task-subtasks" placeholder="One subtask per line, e.g.&#10;Buy MDF&#10;Cut panels&#10;Test fit drivers"></textarea>
+          <p class="note">Each line becomes a tickable subtask.</p>
+        </div>
+
+        <div class="button-row">
+          <button class="btn green" id="save-task" onclick="saveTask()">Add task</button>
+          <button class="btn secondary" onclick="resetForm()">Clear</button>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0;">
+
+        <h2>Quick templates</h2>
+        <div class="quick-list">
+          <button class="template-btn" onclick="loadTemplate('school')">School / lesson task</button>
+          <button class="template-btn" onclick="loadTemplate('assessment')">Assessment marking task</button>
+          <button class="template-btn" onclick="loadTemplate('audio')">DIY speaker build task</button>
+          <button class="template-btn" onclick="loadTemplate('home')">Home/admin task</button>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0;">
+
+        <h2>Backup and tools</h2>
+        <div class="button-row">
+          <button class="btn purple" onclick="exportTasks()">Export JSON</button>
+          <button class="btn secondary" onclick="document.getElementById('import-file').click()">Import JSON</button>
+          <button class="btn secondary" onclick="window.print()">Print</button>
+          <button class="btn danger" onclick="deleteCompleted()">Delete completed</button>
+        </div>
+        <input id="import-file" class="hidden" type="file" accept="application/json,.json" onchange="importTasks(this)">
+        <p class="note">Tasks save in this browser using local storage. Use Export JSON to move them to another device.</p>
+      </aside>
+
+      <section>
+        <div class="task-list" id="task-list"></div>
+      </section>
+    </main>
+
+    <footer>
+      To-Do Checklist · runs in your browser · no account required · data is saved locally on this device.
+    </footer>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "cm_project_todo_v1";
+    let tasks = [];
+    let editingId = null;
+
+    const $ = id => document.getElementById(id);
+
+    const priorityRank = { high: 3, medium: 2, low: 1 };
+
+    function todayString() {
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function loadTasks() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        tasks = Array.isArray(saved) ? saved : [];
+      } catch {
+        tasks = [];
+      }
+
+      if (!tasks.length) {
+        tasks = [
+          {
+            id: crypto.randomUUID(),
+            title: "Example: Add your first real task",
+            notes: "Edit or delete this example task. Your tasks are saved in this browser.",
+            category: "Getting started",
+            priority: "medium",
+            dueDate: todayString(),
+            tags: ["example"],
+            done: false,
+            createdAt: Date.now(),
+            subtasks: [
+              { id: crypto.randomUUID(), text: "Try ticking a subtask", done: false },
+              { id: crypto.randomUUID(), text: "Use Export JSON as a backup", done: false }
+            ]
+          }
+        ];
+        persist();
+      }
+
+      render();
+    }
+
+    function persist() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    }
+
+    function saveTask() {
+      const title = $("task-title").value.trim();
+      if (!title) {
+        $("task-title").focus();
+        return;
+      }
+
+      const subtasks = $("task-subtasks").value
+        .split("\n")
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map(text => ({ id: crypto.randomUUID(), text, done: false }));
+
+      const taskData = {
+        title,
+        notes: $("task-notes").value.trim(),
+        category: $("task-category").value.trim() || "General",
+        priority: $("task-priority").value,
+        dueDate: $("task-date").value,
+        tags: $("task-tags").value.split(",").map(t => t.trim()).filter(Boolean),
+      };
+
+      if (editingId) {
+        const current = tasks.find(t => t.id === editingId);
+        if (!current) return;
+        Object.assign(current, taskData);
+        current.subtasks = subtasks.length ? mergeSubtasks(current.subtasks || [], subtasks) : [];
+      } else {
+        tasks.unshift({
+          id: crypto.randomUUID(),
+          ...taskData,
+          done: false,
+          createdAt: Date.now(),
+          subtasks
+        });
+      }
+
+      persist();
+      resetForm();
+      render();
+    }
+
+    function mergeSubtasks(oldSubtasks, newSubtasks) {
+      return newSubtasks.map(st => {
+        const match = oldSubtasks.find(old => old.text.toLowerCase() === st.text.toLowerCase());
+        return match ? { ...st, id: match.id, done: match.done } : st;
+      });
+    }
+
+    function resetForm() {
+      editingId = null;
+      $("form-panel").classList.remove("editing");
+      $("form-title").textContent = "Add a task";
+      $("save-task").textContent = "Add task";
+      $("task-title").value = "";
+      $("task-notes").value = "";
+      $("task-category").value = "";
+      $("task-priority").value = "medium";
+      $("task-date").value = "";
+      $("task-tags").value = "";
+      $("task-subtasks").value = "";
+    }
+
+    function editTask(id) {
+      const t = tasks.find(task => task.id === id);
+      if (!t) return;
+      editingId = id;
+      $("form-panel").classList.add("editing");
+      $("form-title").textContent = "Edit task";
+      $("save-task").textContent = "Save changes";
+      $("task-title").value = t.title;
+      $("task-notes").value = t.notes || "";
+      $("task-category").value = t.category || "";
+      $("task-priority").value = t.priority || "medium";
+      $("task-date").value = t.dueDate || "";
+      $("task-tags").value = (t.tags || []).join(", ");
+      $("task-subtasks").value = (t.subtasks || []).map(st => st.text).join("\n");
+      window.scrollTo({ top: 0, behaviour: "smooth" });
+    }
+
+    function deleteTask(id) {
+      if (!confirm("Delete this task?")) return;
+      tasks = tasks.filter(t => t.id !== id);
+      persist();
+      render();
+    }
+
+    function toggleDone(id) {
+      const t = tasks.find(task => task.id === id);
+      if (!t) return;
+      t.done = !t.done;
+      persist();
+      render();
+    }
+
+    function toggleSubtask(taskId, subtaskId) {
+      const t = tasks.find(task => task.id === taskId);
+      if (!t) return;
+      const st = (t.subtasks || []).find(s => s.id === subtaskId);
+      if (!st) return;
+      st.done = !st.done;
+      persist();
+      render();
+    }
+
+    function duplicateTask(id) {
+      const t = tasks.find(task => task.id === id);
+      if (!t) return;
+      tasks.unshift({
+        ...JSON.parse(JSON.stringify(t)),
+        id: crypto.randomUUID(),
+        title: t.title + " copy",
+        done: false,
+        createdAt: Date.now(),
+        subtasks: (t.subtasks || []).map(st => ({ ...st, id: crypto.randomUUID(), done: false }))
+      });
+      persist();
+      render();
+    }
+
+    function isOverdue(t) {
+      return !t.done && t.dueDate && t.dueDate < todayString();
+    }
+
+    function isDueToday(t) {
+      return !t.done && t.dueDate === todayString();
+    }
+
+    function getFilteredTasks() {
+      const search = $("search").value.trim().toLowerCase();
+      const status = $("filter-status").value;
+      const category = $("filter-category").value;
+      const sort = $("sort-by").value;
+
+      let result = tasks.filter(t => {
+        const haystack = [
+          t.title,
+          t.notes,
+          t.category,
+          ...(t.tags || []),
+          ...(t.subtasks || []).map(st => st.text)
+        ].join(" ").toLowerCase();
+
+        if (search && !haystack.includes(search)) return false;
+        if (category !== "all" && (t.category || "General") !== category) return false;
+        if (status === "active" && t.done) return false;
+        if (status === "done" && !t.done) return false;
+        if (status === "overdue" && !isOverdue(t)) return false;
+        if (status === "today" && !isDueToday(t)) return false;
+        return true;
+      });
+
+      result.sort((a, b) => {
+        if (sort === "created-asc") return a.createdAt - b.createdAt;
+        if (sort === "created-desc") return b.createdAt - a.createdAt;
+        if (sort === "due-asc") return (a.dueDate || "9999-99-99").localeCompare(b.dueDate || "9999-99-99");
+        if (sort === "priority-desc") return priorityRank[b.priority] - priorityRank[a.priority];
+        if (sort === "title-asc") return a.title.localeCompare(b.title);
+        return 0;
+      });
+
+      return result;
+    }
+
+    function render() {
+      renderCategories();
+      renderStats();
+      renderTasks();
+    }
+
+    function renderCategories() {
+      const categories = [...new Set(tasks.map(t => t.category || "General"))].sort();
+      $("filter-category").innerHTML = '<option value="all">All categories</option>' +
+        categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+
+      $("category-options").innerHTML = categories.map(c => `<option value="${escapeHtml(c)}"></option>`).join("");
+    }
+
+    function renderStats() {
+      const total = tasks.length;
+      const done = tasks.filter(t => t.done).length;
+      const active = total - done;
+      const overdue = tasks.filter(isOverdue).length;
+      const percent = total ? Math.round((done / total) * 100) : 0;
+
+      $("stat-total").textContent = total;
+      $("stat-active").textContent = active;
+      $("stat-done").textContent = done;
+      $("stat-overdue").textContent = overdue;
+      $("progress-text").textContent = `${percent}%`;
+      $("progress-fill").style.width = `${percent}%`;
+    }
+
+    function renderTasks() {
+      const list = $("task-list");
+      const visible = getFilteredTasks();
+
+      if (!visible.length) {
+        list.innerHTML = `<div class="empty">
+          <h2>No tasks found</h2>
+          <p>Add a task, or clear your filters to show more results.</p>
+        </div>`;
+        return;
+      }
+
+      list.innerHTML = visible.map(taskHtml).join("");
+    }
+
+    function taskHtml(t) {
+      const due = duePill(t);
+      const tags = (t.tags || []).map(tag => `<span class="pill">#${escapeHtml(tag)}</span>`).join("");
+      const subtasks = (t.subtasks || []).length ? `
+        <div class="subtasks">
+          ${(t.subtasks || []).map(st => `
+            <label class="subtask ${st.done ? "done" : ""}">
+              <input type="checkbox" ${st.done ? "checked" : ""} onchange="toggleSubtask('${t.id}', '${st.id}')">
+              <span>${escapeHtml(st.text)}</span>
+            </label>
+          `).join("")}
+        </div>
+      ` : "";
+
+      const subProgress = subtaskProgress(t);
+
+      return `
+        <article class="task-card priority-${t.priority} ${t.done ? "done" : ""}">
+          <div class="task-top">
+            <input class="task-check" type="checkbox" ${t.done ? "checked" : ""} onchange="toggleDone('${t.id}')" aria-label="Mark task complete">
+            <div>
+              <h3 class="task-title">${escapeHtml(t.title)}</h3>
+              ${t.notes ? `<p class="task-notes">${escapeHtml(t.notes)}</p>` : ""}
+              <div class="meta">
+                <span class="pill ${t.priority}">${capitalise(t.priority)} priority</span>
+                <span class="pill">${escapeHtml(t.category || "General")}</span>
+                ${due}
+                ${subProgress}
+                ${t.done ? `<span class="pill done">Completed</span>` : ""}
+                ${tags}
+              </div>
+              ${subtasks}
+            </div>
+            <div class="actions">
+              <button class="icon-btn" title="Edit" onclick="editTask('${t.id}')">✎</button>
+              <button class="icon-btn" title="Duplicate" onclick="duplicateTask('${t.id}')">⧉</button>
+              <button class="icon-btn" title="Delete" onclick="deleteTask('${t.id}')">×</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function duePill(t) {
+      if (!t.dueDate) return "";
+      if (isOverdue(t)) return `<span class="pill overdue">Overdue · ${formatDate(t.dueDate)}</span>`;
+      if (isDueToday(t)) return `<span class="pill today">Due today</span>`;
+      return `<span class="pill">Due ${formatDate(t.dueDate)}</span>`;
+    }
+
+    function subtaskProgress(t) {
+      const subs = t.subtasks || [];
+      if (!subs.length) return "";
+      const done = subs.filter(s => s.done).length;
+      return `<span class="pill">${done}/${subs.length} subtasks</span>`;
+    }
+
+    function formatDate(dateString) {
+      const [y, m, d] = dateString.split("-");
+      if (!y || !m || !d) return dateString;
+      return `${d}/${m}/${y}`;
+    }
+
+    function capitalise(s) {
+      return String(s || "").charAt(0).toUpperCase() + String(s || "").slice(1);
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[c]));
+    }
+
+    function clearFilters() {
+      $("search").value = "";
+      $("filter-status").value = "all";
+      $("filter-category").value = "all";
+      $("sort-by").value = "created-desc";
+      renderTasks();
+    }
+
+    function deleteCompleted() {
+      const count = tasks.filter(t => t.done).length;
+      if (!count) {
+        alert("There are no completed tasks to delete.");
+        return;
+      }
+      if (!confirm(`Delete ${count} completed task(s)?`)) return;
+      tasks = tasks.filter(t => !t.done);
+      persist();
+      render();
+    }
+
+    function exportTasks() {
+      const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `to-do-checklist-backup-${todayString()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function importTasks(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      file.text().then(text => {
+        const imported = JSON.parse(text);
+        if (!Array.isArray(imported)) throw new Error("Invalid format");
+        const cleaned = imported.map(t => ({
+          id: t.id || crypto.randomUUID(),
+          title: t.title || "Untitled task",
+          notes: t.notes || "",
+          category: t.category || "General",
+          priority: ["low", "medium", "high"].includes(t.priority) ? t.priority : "medium",
+          dueDate: t.dueDate || "",
+          tags: Array.isArray(t.tags) ? t.tags : [],
+          done: Boolean(t.done),
+          createdAt: t.createdAt || Date.now(),
+          subtasks: Array.isArray(t.subtasks) ? t.subtasks.map(st => ({
+            id: st.id || crypto.randomUUID(),
+            text: st.text || "",
+            done: Boolean(st.done)
+          })).filter(st => st.text) : []
+        }));
+
+        if (confirm("Import tasks? This will add them to your current list.")) {
+          tasks = [...cleaned, ...tasks];
+          persist();
+          render();
+        }
+      }).catch(() => {
+        alert("That file does not look like a valid checklist backup.");
+      }).finally(() => {
+        input.value = "";
+      });
+    }
+
+    function loadTemplate(type) {
+      const templates = {
+        school: {
+          title: "Prepare lesson resources",
+          notes: "Create or check the resources needed for the lesson.",
+          category: "School",
+          priority: "medium",
+          tags: "lesson, resources",
+          subtasks: "Set learning intention and success criteria\nPrepare slides or worksheet\nCheck practical materials\nPlan exit ticket"
+        },
+        assessment: {
+          title: "Mark assessment task",
+          notes: "Mark, enter results and record feedback.",
+          category: "Assessment",
+          priority: "high",
+          tags: "marking, feedback",
+          subtasks: "Open marking rubric\nMark student submissions\nEnter marks in spreadsheet\nWrite feedback comments\nCheck absent students"
+        },
+        audio: {
+          title: "Plan DIY speaker build",
+          notes: "Use Speaker Bench or measurements to check enclosure and crossover starting points.",
+          category: "Audio",
+          priority: "medium",
+          tags: "speaker, build",
+          subtasks: "Enter driver parameters\nChoose sealed or ported box\nCalculate internal box dimensions\nPlan crossover values\nCreate shopping/cutting list"
+        },
+        home: {
+          title: "Complete home/admin task",
+          notes: "General personal or household task.",
+          category: "Home",
+          priority: "low",
+          tags: "admin",
+          subtasks: "Check what needs doing\nGather information or materials\nComplete task\nFile or save evidence if needed"
+        }
+      };
+
+      const t = templates[type];
+      $("task-title").value = t.title;
+      $("task-notes").value = t.notes;
+      $("task-category").value = t.category;
+      $("task-priority").value = t.priority;
+      $("task-tags").value = t.tags;
+      $("task-subtasks").value = t.subtasks;
+      $("task-title").focus();
+    }
+
+    ["search", "filter-status", "filter-category", "sort-by"].forEach(id => {
+      $(id).addEventListener("input", renderTasks);
+      $(id).addEventListener("change", renderTasks);
+    });
+
+    loadTasks();
+  </script>
+</body>
+</html>
