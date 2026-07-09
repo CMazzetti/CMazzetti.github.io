@@ -2,143 +2,651 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>CMazzetti Project Hub</title>
+  <title>CMazzetti Project Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CMazzetti personal project dashboard for HTML tools, classroom projects, DIY audio and productivity apps.">
+  <meta name="theme-color" content="#0f172a">
 
   <style>
+    :root {
+      --bg: #eef2f7;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --panel: #ffffff;
+      --panel-soft: #f8fafc;
+      --line: #e2e8f0;
+      --blue: #2563eb;
+      --cyan: #06b6d4;
+      --green: #16a34a;
+      --amber: #d97706;
+      --red: #dc2626;
+      --purple: #7c3aed;
+      --shadow: 0 18px 45px rgba(15, 23, 42, 0.13);
+      --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.08);
+      --radius: 20px;
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
-      background: #f4f4f4;
-      color: #222;
+      font-family: var(--sans);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(37, 99, 235, 0.10), transparent 26%),
+        radial-gradient(circle at 90% 10%, rgba(124, 58, 237, 0.12), transparent 30%),
+        var(--bg);
+      color: var(--ink);
+      line-height: 1.55;
     }
 
-    header {
-      background: #222;
+    a { color: inherit; }
+
+    .hero {
       color: white;
-      padding: 35px 20px;
-      text-align: center;
+      padding: 28px 18px 72px;
+      background:
+        radial-gradient(circle at 18% 10%, rgba(6, 182, 212, 0.28), transparent 28%),
+        radial-gradient(circle at 82% 0%, rgba(124, 58, 237, 0.30), transparent 30%),
+        linear-gradient(135deg, #020617, #111827 54%, #1e293b);
+      position: relative;
+      overflow: hidden;
     }
 
-    header h1 {
-      margin: 0 0 10px;
-      font-size: 2.2rem;
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -10% -90px -10%;
+      height: 190px;
+      background: rgba(255,255,255,0.04);
+      transform: rotate(-2deg);
+      border-top: 1px solid rgba(255,255,255,0.10);
     }
 
-    header p {
+    .nav {
+      max-width: 1180px;
+      margin: 0 auto 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      font-size: 1.05rem;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      box-shadow: 0 10px 28px rgba(37,99,235,0.32);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav-links a {
+      color: #dbeafe;
+      text-decoration: none;
+      font-weight: 750;
+      font-size: 0.92rem;
+      padding: 8px 11px;
+      border-radius: 12px;
+    }
+
+    .nav-links a:hover {
+      background: rgba(255,255,255,0.10);
+    }
+
+    .hero-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(280px, 1.2fr) minmax(260px, 0.8fr);
+      gap: 28px;
+      align-items: end;
+      position: relative;
+      z-index: 1;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.16);
+      color: #cbd5e1;
+      font-weight: 800;
+      font-size: 0.86rem;
+      margin-bottom: 18px;
+    }
+
+    h1 {
       margin: 0;
-      color: #ddd;
-      font-size: 1rem;
+      font-size: clamp(2.6rem, 7vw, 5.2rem);
+      line-height: 0.95;
+      letter-spacing: -0.07em;
     }
+
+    .hero p {
+      max-width: 760px;
+      margin: 20px 0 0;
+      color: #cbd5e1;
+      font-size: clamp(1rem, 2vw, 1.18rem);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 11px 15px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 850;
+      border: 1px solid rgba(255,255,255,0.16);
+      color: white;
+      background: rgba(255,255,255,0.09);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      border: none;
+      box-shadow: 0 12px 35px rgba(37,99,235,0.36);
+    }
+
+    .hero-card {
+      background: rgba(15, 23, 42, 0.54);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--radius);
+      padding: 22px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 48px rgba(0,0,0,0.22);
+    }
+
+    .hero-card h2 {
+      margin: 0 0 10px;
+      font-size: 1.15rem;
+    }
+
+    .hero-card ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #dbeafe;
+    }
+
+    .hero-card li { margin: 7px 0; }
 
     main {
-      max-width: 1100px;
-      margin: 30px auto;
-      padding: 20px;
+      max-width: 1180px;
+      margin: -36px auto 0;
+      padding: 0 18px 64px;
+      position: relative;
+      z-index: 3;
     }
 
-    .intro {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-      margin-bottom: 25px;
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
     }
 
-    .intro h2 {
-      margin-top: 0;
+    .summary-card, .panel, .project-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .summary-card {
+      padding: 17px;
+    }
+
+    .summary-card .number {
+      font-size: 2rem;
+      font-weight: 950;
+      letter-spacing: -0.06em;
+      line-height: 1;
+    }
+
+    .summary-card .label {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 750;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 330px;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 24px;
+      margin-bottom: 22px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-size: 1.42rem;
+      letter-spacing: -0.03em;
+    }
+
+    .panel .sub {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.95rem;
     }
 
     .project-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(2, minmax(250px, 1fr));
+      gap: 16px;
     }
 
     .project-card {
-      background: white;
-      padding: 22px;
-      border-radius: 12px;
+      padding: 20px;
       text-decoration: none;
-      color: #222;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-      transition: transform 0.2s, box-shadow 0.2s;
-      display: block;
+      color: var(--ink);
+      display: flex;
+      flex-direction: column;
+      min-height: 226px;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+      position: relative;
+      overflow: hidden;
     }
+
+    .project-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 5px;
+      background: var(--blue);
+    }
+
+    .project-card.audio::before { background: linear-gradient(90deg, var(--cyan), var(--blue)); }
+    .project-card.productivity::before { background: linear-gradient(90deg, var(--green), var(--cyan)); }
+    .project-card.diy::before { background: linear-gradient(90deg, var(--amber), var(--red)); }
+    .project-card.teaching::before { background: linear-gradient(90deg, var(--purple), var(--blue)); }
 
     .project-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+      transform: translateY(-5px);
+      box-shadow: var(--shadow);
+      border-color: #bfdbfe;
     }
 
-    .project-card h2 {
-      margin-top: 0;
-      margin-bottom: 10px;
-      font-size: 1.3rem;
+    .project-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    .icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-size: 1.55rem;
+      background: #eff6ff;
+    }
+
+    .project-card.audio .icon { background: #ecfeff; }
+    .project-card.productivity .icon { background: #ecfdf5; }
+    .project-card.diy .icon { background: #fff7ed; }
+    .project-card.teaching .icon { background: #f5f3ff; }
+
+    .status {
+      font-size: 0.76rem;
+      font-weight: 900;
+      border-radius: 999px;
+      padding: 5px 9px;
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status.soon {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .project-card h3 {
+      margin: 0 0 9px;
+      font-size: 1.32rem;
+      letter-spacing: -0.03em;
     }
 
     .project-card p {
-      margin-bottom: 0;
-      color: #555;
-      line-height: 1.5;
+      margin: 0;
+      color: var(--muted);
+      flex: 1;
     }
 
-    .tag {
-      display: inline-block;
-      background: #e8e8e8;
-      color: #333;
-      padding: 4px 9px;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      margin-bottom: 12px;
+    .card-footer {
+      margin-top: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-weight: 850;
+    }
+
+    .category { color: var(--muted); font-size: 0.84rem; }
+    .open { color: var(--blue); }
+
+    .side-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .side-item {
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 14px;
+    }
+
+    .side-item strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .side-item span {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .idea-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .idea {
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .idea strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .idea span {
+      color: var(--muted);
+      font-size: 0.92rem;
     }
 
     footer {
       text-align: center;
-      padding: 25px;
-      color: #666;
+      color: var(--muted);
+      padding: 0 18px 48px;
       font-size: 0.9rem;
+    }
+
+    @media (max-width: 980px) {
+      .hero-inner, .dashboard-grid { grid-template-columns: 1fr; }
+      .hero-card { max-width: 680px; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      .nav { align-items: flex-start; }
+      .nav-links { display: none; }
+      .project-grid, .idea-grid { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      main { margin-top: -26px; }
+      .panel { padding: 20px; }
     }
   </style>
 </head>
 
 <body>
-  <header>
-    <h1>CMazzetti Project Hub</h1>
-    <p>Quick access to my HTML projects, tools and experiments</p>
-  </header>
+  <section class="hero">
+    <nav class="nav">
+      <div class="brand">
+        <div class="brand-icon">CM</div>
+        <span>CMazzetti Projects</span>
+      </div>
+      <div class="nav-links">
+        <a href="#projects">Projects</a>
+        <a href="#ideas">Ideas</a>
+        <a href="https://github.com/CMazzetti/CMazzetti.github.io">GitHub</a>
+      </div>
+    </nav>
+
+    <div class="hero-inner">
+      <div>
+        <div class="eyebrow">Personal Project Dashboard</div>
+        <h1>Tools, builds and experiments in one place.</h1>
+        <p>
+          A central launchpad for my HTML projects, DIY audio calculators, productivity tools and future classroom utilities.
+        </p>
+        <div class="actions">
+          <a class="btn primary" href="#projects">Open Projects</a>
+          <a class="btn" href="diy-shopping-list/">DIY Shopping List</a>
+          <a class="btn" href="to-do-checklist/">To-Do Checklist</a>
+        </div>
+      </div>
+
+      <aside class="hero-card">
+        <h2>Dashboard notes</h2>
+        <ul>
+          <li>Each project runs as a separate static web app.</li>
+          <li>Works on laptop, phone, tablet and classroom display.</li>
+          <li>Keep private student or school data out of public files.</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
 
   <main>
-    <section class="intro">
-      <h2>My Projects</h2>
-      <p>This page is a central hub for my web-based tools and projects. Each card opens a separate HTML project.</p>
+    <section class="summary-grid" aria-label="Project summary">
+      <div class="summary-card">
+        <div class="number">3</div>
+        <div class="label">Live projects</div>
+      </div>
+      <div class="summary-card">
+        <div class="number">4</div>
+        <div class="label">Project areas</div>
+      </div>
+      <div class="summary-card">
+        <div class="number">100%</div>
+        <div class="label">Browser based</div>
+      </div>
+      <div class="summary-card">
+        <div class="number">0</div>
+        <div class="label">Server required</div>
+      </div>
     </section>
 
-    <section class="project-grid">
+    <div class="dashboard-grid">
+      <section>
+        <div class="panel" id="projects">
+          <div class="panel-head">
+            <div>
+              <h2>Live Projects</h2>
+              <p class="sub">Ready-to-use tools currently uploaded to this website.</p>
+            </div>
+          </div>
 
-      <a class="project-card" href="speaker-bench/">
-        <span class="tag">Audio / DIY</span>
-        <h2>Speaker Bench</h2>
-        <p>DIY speaker enclosure, crossover and system design toolkit.</p>
-      </a>
+          <div class="project-grid">
+            <a class="project-card audio" href="speaker-bench/">
+              <div class="project-top">
+                <div class="icon">🔊</div>
+                <span class="status">Live</span>
+              </div>
+              <h3>Speaker Bench</h3>
+              <p>DIY speaker enclosure, crossover and system design toolkit for audio projects.</p>
+              <div class="card-footer">
+                <span class="category">Audio / DIY</span>
+                <span class="open">Open →</span>
+              </div>
+            </a>
 
-      <a class="project-card" href="to-do-checklist/">
-        <span class="tag">Productivity</span>
-        <h2>To-Do Checklist</h2>
-        <p>A comprehensive task planner with categories, priorities, due dates, subtasks and progress tracking.</p>
-      </a>
+            <a class="project-card productivity" href="to-do-checklist/">
+              <div class="project-top">
+                <div class="icon">✅</div>
+                <span class="status">Live</span>
+              </div>
+              <h3>To-Do Checklist</h3>
+              <p>Task planner with categories, priorities, due dates, subtasks, filters and progress tracking.</p>
+              <div class="card-footer">
+                <span class="category">Productivity</span>
+                <span class="open">Open →</span>
+              </div>
+            </a>
 
-      <a class="project-card" href="#">
-        <span class="tag">Coming soon</span>
-        <h2>Project 3</h2>
-        <p>Add another project or classroom tool here.</p>
-      </a>
+            <a class="project-card diy" href="diy-shopping-list/">
+              <div class="project-top">
+                <div class="icon">🛒</div>
+                <span class="status">Live</span>
+              </div>
+              <h3>DIY Shopping List</h3>
+              <p>Track parts, prices, retailers, links, priorities, project categories and shopping totals.</p>
+              <div class="card-footer">
+                <span class="category">DIY / Shopping</span>
+                <span class="open">Open →</span>
+              </div>
+            </a>
 
-    </section>
+            <a class="project-card teaching" href="#">
+              <div class="project-top">
+                <div class="icon">🧰</div>
+                <span class="status soon">Coming soon</span>
+              </div>
+              <h3>Teacher Toolkit</h3>
+              <p>Future hub for timers, random pickers, seating tools, group makers and quick classroom activities.</p>
+              <div class="card-footer">
+                <span class="category">Teaching</span>
+                <span>Planned</span>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <div class="panel" id="ideas">
+          <div class="panel-head">
+            <div>
+              <h2>Future Project Ideas</h2>
+              <p class="sub">Useful tools to build and add later.</p>
+            </div>
+          </div>
+
+          <div class="idea-grid">
+            <div class="idea">
+              <strong>🎲 Random Name Picker</strong>
+              <span>Pick students, groups or teams quickly during lessons.</span>
+            </div>
+            <div class="idea">
+              <strong>⏱️ Lesson Timer</strong>
+              <span>Countdown timers for warm-ups, practicals and transitions.</span>
+            </div>
+            <div class="idea">
+              <strong>🪚 Speaker Cut List</strong>
+              <span>MDF panel sizes, box dimensions and build notes.</span>
+            </div>
+            <div class="idea">
+              <strong>📋 Report Comment Helper</strong>
+              <span>Draft structured comments without storing private data.</span>
+            </div>
+            <div class="idea">
+              <strong>👥 Group Maker</strong>
+              <span>Create random or balanced student groups.</span>
+            </div>
+            <div class="idea">
+              <strong>🧪 Practical Planner</strong>
+              <span>Materials, risks, steps and setup notes for pracs.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside>
+        <div class="panel">
+          <h2>Quick Launch</h2>
+          <p class="sub">Open the main tools directly.</p>
+          <div class="side-list">
+            <a class="side-item" href="speaker-bench/">
+              <strong>🔊 Speaker Bench</strong>
+              <span>Cabinets, crossovers and system notes.</span>
+            </a>
+            <a class="side-item" href="to-do-checklist/">
+              <strong>✅ To-Do Checklist</strong>
+              <span>Personal task planning and progress.</span>
+            </a>
+            <a class="side-item" href="diy-shopping-list/">
+              <strong>🛒 DIY Shopping List</strong>
+              <span>Parts, prices, links and totals.</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Build Rules</h2>
+          <div class="side-list">
+            <div class="side-item">
+              <strong>Separate folders</strong>
+              <span>Each project should live in its own folder with its own index.html.</span>
+            </div>
+            <div class="side-item">
+              <strong>Public website</strong>
+              <span>Avoid uploading real student names, marks, reports or private files.</span>
+            </div>
+            <div class="side-item">
+              <strong>Static first</strong>
+              <span>These tools are designed to run directly in the browser.</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
   </main>
 
   <footer>
-    <p>Created by CMazzetti</p>
+    <p>Created by CMazzetti · Static HTML projects hosted with GitHub Pages</p>
   </footer>
 </body>
 </html>
